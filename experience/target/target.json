@@ -1,0 +1,24 @@
+{
+  "imagePath": "image-targets/affiche-demo_luminance.jpg",
+  "metadata": null,
+  "name": "affiche-demo",
+  "type": "PLANAR",
+  "properties": {
+    "left": 0,
+    "top": 49,
+    "width": 1200,
+    "height": 1600,
+    "isRotated": false,
+    "originalWidth": 1200,
+    "originalHeight": 1697
+  },
+  "resources": {
+    "originalImage": "affiche-demo_original.jpg",
+    "croppedImage": "affiche-demo_cropped.jpg",
+    "thumbnailImage": "affiche-demo_thumbnail.jpg",
+    "luminanceImage": "affiche-demo_luminance.jpg",
+    "posterImage": "affiche-demo_poster.jpg"
+  },
+  "created": 1791362946491,
+  "updated": 1791362946491
+}

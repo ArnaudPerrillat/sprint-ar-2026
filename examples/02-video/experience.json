@@ -1,0 +1,61 @@
+{
+  "$schema": "../../core/schema/experience.schema.json",
+  "//": "EXEMPLE 2 — Une vidéo sur fond vert qui jaillit de l'affiche quand on la touche. Le vert est retiré par le « chroma key » (le WebM transparent ne marche pas sur iPhone).",
+  "title": "Affiche démo — vidéo",
+  "author": "DNMade 2 Numérique",
+  "theme": {
+    "color": "#1d4bff",
+    "textColor": "#ffffff",
+    "font": "Space Grotesk"
+  },
+  "bricks": [
+    {
+      "//": "trigger tap + toggle : un tap la fait apparaître, un autre la cache. x/y = centre de la vidéo sur l'affiche (0 à 1 depuis le coin haut-gauche), z = décollement vers toi.",
+      "id": "surprise",
+      "type": "video",
+      "src": "assets/demo/fond-vert.mp4",
+      "trigger": {
+        "type": "tap",
+        "toggle": true
+      },
+      "appear": "pop",
+      "duration": 700,
+      "x": 0.72,
+      "y": 0.42,
+      "z": 0.15,
+      "width": 0.55,
+      "loop": true,
+      "sound": true,
+      "//chroma": "keyColor = la couleur à retirer. Augmente similarity si du vert reste, baisse-la si ton sujet disparaît.",
+      "chroma": {
+        "keyColor": "#00ff00",
+        "similarity": 0.4,
+        "smoothness": 0.08,
+        "spill": 0.1
+      }
+    },
+    {
+      "//": "Les gouttes d'encre suivent le même tap que la vidéo.",
+      "id": "encre",
+      "type": "particles",
+      "preset": "ink",
+      "color": [
+        "#1d4bff",
+        "#ff2d87"
+      ],
+      "density": 0.03,
+      "trigger": {
+        "type": "tap",
+        "toggle": true
+      },
+      "x": 0.72,
+      "y": 0.42,
+      "area": {
+        "width": 0.7,
+        "height": 0.6,
+        "depth": 0.35
+      },
+      "size": 0.6
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "../../core/schema/experience.schema.json",
+  "//": "EXEMPLE 3 — Un modèle 3D qui sort de l'affiche, des points cliquables (hotspots) et un bouton d'action (CTA).",
+  "title": "Affiche démo — modèle 3D",
+  "author": "DNMade 2 Numérique",
+  "theme": { "color": "#ffcc00", "textColor": "#141414", "font": "Space Grotesk" },
+  "bricks": [
+    {
+      "//": "size = taille du plus grand côté du modèle, en largeur d'affiche. autoRotate = degrés par seconde. animation : \"all\", \"none\" ou le nom d'une animation du .glb.",
+      "id": "totem",
+      "type": "model",
+      "src": "assets/demo/totem.glb",
+      "trigger": "found",
+      "appear": "rise",
+      "duration": 900,
+      "x": 0.72,
+      "y": 0.45,
+      "z": 0.22,
+      "size": 0.45,
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "animation": "danse",
+      "autoRotate": 25
+    },
+    {
+      "id": "paillettes",
+      "type": "particles",
+      "preset": "sparkles",
+      "color": ["#ffcc00", "#ffffff"],
+      "density": 0.3,
+      "trigger": { "type": "delay", "ms": 800 },
+      "x": 0.72,
+      "y": 0.45,
+      "z": 0.1,
+      "area": { "width": 0.6, "height": 0.7, "depth": 0.4 }
+    },
+    {
+      "//": "La brique ui ne compte pas dans les 3 briques conseillées. Les hotspots ont leurs propres x/y/z sur l'affiche.",
+      "id": "infos",
+      "type": "ui",
+      "trigger": { "type": "delay", "ms": 1500 },
+      "hotspots": [
+        { "x": 0.2, "y": 0.06, "label": "?", "text": "Cette affiche a été imprimée en 4 passages : jaune, rose, bleu puis noir." },
+        { "x": 0.3, "y": 0.5, "label": "Typo", "text": "Titre composé en Arial Black, corps 210." },
+        { "x": 0.8, "y": 0.83, "label": "+", "text": "Le totem est un modèle 3D animé au format .glb.", "link": "https://8thwall.org" }
+      ],
+      "cta": { "label": "Découvrir le workshop", "url": "https://8thwall.org" },
+      "soundButton": false
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "../core/schema/experience.schema.json",
+  "//": "EXEMPLE 1 — Les typons qui se décollent. Une seule brique « layers » : un PNG transparent par couleur imprimée, dans l'ordre d'impression (le premier est collé au papier).",
+  "title": "Affiche démo — typons",
+  "author": "DNMade 2 Numérique",
+  "onLost": "hide",
+  "theme": { "color": "#ff2d87", "textColor": "#ffffff", "font": "Space Grotesk" },
+  "bricks": [
+    {
+      "//": "spread = écart entre deux couches (en largeur d'affiche : 0.06 = 6 %). burst = les couches partent à plat puis se décollent une à une. float = léger flottement.",
+      "id": "typons",
+      "type": "layers",
+      "trigger": "found",
+      "appear": "fade",
+      "duration": 400,
+      "layers": [
+        { "src": "assets/demo/typon-1-jaune.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-2-rose.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-3-bleu.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-4-noir.png" }
+      ],
+      "spread": 0.06,
+      "burst": { "duration": 1400, "stagger": 250 },
+      "float": 0.01
+    }
+  ]
+}

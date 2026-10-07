@@ -1,0 +1,32 @@
+{
+  "$schema": "../../core/schema/experience.schema.json",
+  "//": "EXEMPLE 4 (avancé) — Un behavior : un petit fichier JavaScript dans behaviors/ qui fait suivre l'inclinaison du téléphone au typon noir. Les confettis tombent quand on regarde l'affiche de biais (déclencheur tilt).",
+  "title": "Affiche démo — behavior",
+  "author": "DNMade 2 Numérique",
+  "theme": { "color": "#ff2d87", "textColor": "#ffffff", "font": "Space Grotesk" },
+  "behaviors": ["suivre-inclinaison"],
+  "bricks": [
+    {
+      "id": "typons",
+      "type": "layers",
+      "layers": [
+        { "src": "assets/demo/typon-1-jaune.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-2-rose.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-3-bleu.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-4-noir.png" }
+      ],
+      "spread": 0.05,
+      "burst": false
+    },
+    {
+      "//": "tilt : apparaît tant que l'angle de vue dépasse 30° (face à l'affiche = 0°), disparaît sinon.",
+      "id": "confettis",
+      "type": "particles",
+      "preset": "confetti",
+      "color": ["#ffcc00", "#ff2d87", "#1d4bff"],
+      "density": 0.4,
+      "trigger": { "type": "tilt", "min": 30 },
+      "z": 0.2
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "affiche-ra",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Template WebAR : affiche sérigraphiée × réalité augmentée (8th Wall + three.js)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:http": "vite --mode http --port 5174",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "check": "tsx scripts/check.ts",
+    "targets": "tsx scripts/build-targets.ts",
+    "core:seal": "tsx scripts/core-hash.ts --seal",
+    "schema": "tsx scripts/export-schema.ts",
+    "demo-assets": "tsx scripts/make-demo-assets.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "three": "^0.186.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@8thwall/image-target-cli": "1.0.0",
+    "@types/node": "^22.10.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.34.5",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.3"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Affiche augmentée",
+  "description": "Expérience de réalité augmentée web déclenchée par une affiche sérigraphiée (8th Wall + three.js). Le contenu se règle uniquement dans experience/.",
+  "requestFramePermissions": ["camera"]
+}
