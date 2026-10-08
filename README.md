@@ -13,7 +13,7 @@ experience/
 
 Tout le reste (`core/`, `scripts/`…) fait marcher l'AR : **on n'y touche pas**. Si un bandeau rouge « Le dossier core/ a été modifié » apparaît, préviens ton enseignant.
 
-> **Le jour du workshop**, garde ouverte la [fiche étudiant](https://claude.ai/code/artifact/ef83212c-2604-4385-afca-59ec9dd17502) : les étapes, la grille de storyboard, les formats de fichiers et le dépannage, en une page.
+> **Le jour du workshop**, garde ouverte la [fiche étudiant](FICHE_ETUDIANT.md) : les étapes, la grille de storyboard, les formats de fichiers et le dépannage, en une page.
 
 ---
 

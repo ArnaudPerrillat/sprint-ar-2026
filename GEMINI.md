@@ -15,7 +15,7 @@ Tu aides un·e étudiant·e en design (DNMade 2 Numérique, niveau de code débu
 ## 2. Fichiers interdits — ne jamais les modifier, créer, supprimer ou renommer
 
 - `core/` (moteur AR, tracking, aperçu, briques) ;
-- `scripts/`, `examples/`, `.github/` ;
+- `scripts/`, `examples/`, `.github/`, `FICHE_ETUDIANT.md` ;
 - `index.html`, `package.json`, `package-lock.json`, `vite.config.ts`, `tsconfig.json`, `metadata.json` ;
 - `experience/target/` (la cible de l'affiche, fournie par l'enseignant).
 
