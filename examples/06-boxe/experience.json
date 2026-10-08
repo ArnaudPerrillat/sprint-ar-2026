@@ -1,0 +1,65 @@
+{
+  "$schema": "../../core/schema/experience.schema.json",
+  "//": "TEST ENSEIGNANT — affiche « Touristes vs Habitants » (cible : experience/target/pourtestvisuel-ar.json). Trois déclencheurs : found, delay, tap, + pastilles ui.",
+  "title": "Touristes vs Habitants",
+  "author": "Test enseignant",
+  "target": "pourtestvisuel-ar.json",
+  "onLost": "hide",
+  "theme": { "color": "#ffcc00", "textColor": "#141414", "font": "Bangers" },
+  "bricks": [
+    {
+      "//": "Étincelles d'impact autour du « VS », dès que l'affiche est détectée.",
+      "id": "impact",
+      "type": "particles",
+      "preset": "sparkles",
+      "color": ["#ffcc00", "#ffffff", "#ff3b30"],
+      "density": 0.35,
+      "speed": 2,
+      "trigger": "found",
+      "x": 0.49,
+      "y": 0.66,
+      "z": 0.05,
+      "area": { "width": 0.4, "height": 0.25, "depth": 0.3 }
+    },
+    {
+      "//": "La tension monte : confettis sur le cadre, 1,5 s après la détection.",
+      "id": "tension",
+      "type": "particles",
+      "preset": "confetti",
+      "color": ["#ffcc00", "#ff3b30", "#1d4bff"],
+      "density": 0.3,
+      "trigger": { "type": "delay", "ms": 1500 },
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0.15,
+      "area": { "width": 1, "height": 0.6, "depth": 0.4 }
+    },
+    {
+      "//": "Touche l'écran : flash de l'appareil photo du touriste (un 2e tap l'éteint).",
+      "id": "flash",
+      "type": "particles",
+      "preset": "sparkles",
+      "color": "#ffffff",
+      "density": 0.6,
+      "speed": 3,
+      "size": 1.6,
+      "trigger": { "type": "tap", "toggle": true },
+      "appear": "pop",
+      "duration": 300,
+      "x": 0.46,
+      "y": 0.41,
+      "z": 0.08,
+      "area": { "width": 0.25, "height": 0.15, "depth": 0.25 }
+    },
+    {
+      "id": "infos",
+      "type": "ui",
+      "trigger": { "type": "delay", "ms": 800 },
+      "hotspots": [
+        { "x": 0.22, "y": 0.36, "label": "Habitant", "text": "Bonnet, poing serré : il défend son quartier." },
+        { "x": 0.76, "y": 0.36, "label": "Touriste", "text": "Lunettes de soleil, téléobjectif : il shoote tout ce qui bouge." },
+        { "x": 0.5, "y": 0.84, "label": "2 nov.", "text": "Samedi 2 novembre — tension à Trentemoult !" }
+      ]
+    }
+  ]
+}

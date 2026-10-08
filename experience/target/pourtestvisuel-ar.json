@@ -1,0 +1,24 @@
+{
+  "imagePath": "image-targets/pourtestvisuel-ar_luminance.jpg",
+  "metadata": null,
+  "name": "pourtestvisuel-ar",
+  "type": "PLANAR",
+  "properties": {
+    "left": 0,
+    "top": 327,
+    "width": 3809,
+    "height": 5079,
+    "isRotated": false,
+    "originalWidth": 3809,
+    "originalHeight": 5732
+  },
+  "resources": {
+    "originalImage": "pourtestvisuel-ar_original.jpg",
+    "croppedImage": "pourtestvisuel-ar_cropped.jpg",
+    "thumbnailImage": "pourtestvisuel-ar_thumbnail.jpg",
+    "luminanceImage": "pourtestvisuel-ar_luminance.jpg",
+    "posterImage": "pourtestvisuel-ar_poster.jpg"
+  },
+  "created": 1791456155021,
+  "updated": 1791456155021
+}
