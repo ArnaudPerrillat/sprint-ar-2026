@@ -1,5 +1,7 @@
 # posters/ — affiches à transformer en cibles (enseignant)
 
+> Les étudiants peuvent aussi générer leurs cibles eux-mêmes, sans rien installer, avec l'outil web https://arnaudperrillat.github.io/sprint-ar-2026/cibles.html (même recadrage, mêmes fichiers, même score, mode groupe). Ce dossier sert pour un traitement en lot.
+
 1. Dépose ici le fichier final de chaque affiche, **tel qu'imprimé** (PNG ou JPG, 1500 px de large ou plus), nommé `prenom-nom.png`.
 2. Lance `npm run targets`.
 3. Chaque affiche donne un dossier `targets-out/prenom-nom/` : son contenu est à copier dans `experience/target/` du projet de l'étudiant·e (en remplaçant les fichiers de démo).

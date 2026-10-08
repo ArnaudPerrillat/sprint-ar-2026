@@ -104,6 +104,10 @@ export default defineConfig(({mode}) => ({
   build: {
     outDir: 'dist',
     chunkSizeWarningLimit: 1500,
+    // Two pages: the AR app, and the target generator for students (cibles.html).
+    rollupOptions: {
+      input: {main: join(root, 'index.html'), cibles: join(root, 'cibles.html')},
+    },
   },
   plugins: [mode === 'http' ? null : basicSsl(), lanQrCode(), reloadOnExperienceChange(), coreIntegrity(), serveExamples()],
 }))

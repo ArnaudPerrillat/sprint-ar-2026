@@ -1,0 +1,124 @@
+:root {
+  --ink: #141414;
+  --quiet: #5c5a55;
+  --paper: #f3efe6;
+  --card: #ffffff;
+  --line: #d9d3c6;
+  --accent: #ff2d87;
+  --good: #1e8a4c;
+  --mid: #b7791f;
+  --bad: #c62828;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.45;
+}
+
+.tc { max-width: 880px; margin: 0 auto; padding: 32px 16px 64px; }
+.tc-head h1 { font-size: clamp(26px, 5vw, 38px); line-height: 1.1; margin: 0 0 8px; }
+.tc-head p { margin: 0 0 24px; color: var(--quiet); max-width: 640px; }
+code { background: rgba(0, 0, 0, 0.06); padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+
+.tc-mode { border: 0; padding: 0; margin: 0 0 16px; display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+.tc-mode legend { font-weight: 700; margin-bottom: 6px; }
+.tc-mode label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.tc-group-name input { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; width: 160px; }
+
+.tc-drop {
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: 40px 16px;
+  border: 2px dashed var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.tc-drop:hover, .tc-drop.is-over { border-color: var(--accent); background: #fff5fa; }
+.tc-drop strong { font-size: 18px; }
+.tc-drop span { color: var(--quiet); font-size: 14px; }
+
+.tc-results { display: grid; gap: 16px; margin-top: 24px; }
+
+.tc-card {
+  display: grid;
+  grid-template-columns: minmax(120px, 220px) 1fr;
+  gap: 20px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+@media (max-width: 560px) { .tc-card { grid-template-columns: 1fr; } }
+
+.tc-preview { position: relative; align-self: start; line-height: 0; }
+.tc-preview img { width: 100%; border-radius: 4px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15); }
+.tc-placeholder { aspect-ratio: 1 / 1.414; background: #eee; border-radius: 4px; display: grid; place-items: center; line-height: 1.4; color: var(--quiet); }
+
+/* The tracked 3:4 zone; everything outside is dimmed. */
+.tc-zone {
+  position: absolute;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 999px rgba(20, 20, 20, 0.35);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.tc-preview { overflow: hidden; border-radius: 4px; }
+
+.tc-name { display: grid; gap: 4px; font-size: 13px; color: var(--quiet); }
+.tc-name input { font: inherit; font-size: 16px; color: var(--ink); padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; max-width: 320px; }
+.tc-file { margin: 4px 0 12px; font-size: 12px; color: var(--quiet); word-break: break-all; }
+.tc-error { color: var(--bad); font-weight: 600; }
+.tc-note { font-size: 13px; color: var(--quiet); }
+
+.tc-score { padding: 10px 12px; border-radius: 10px; border-left: 4px solid; background: #faf8f3; font-size: 14px; }
+.tc-score strong { display: block; }
+.tc-score ul { margin: 6px 0 0; padding-left: 18px; }
+.tc-score.is-bon { border-color: var(--good); }
+.tc-score.is-bon strong { color: var(--good); }
+.tc-score.is-moyen { border-color: var(--mid); }
+.tc-score.is-moyen strong { color: var(--mid); }
+.tc-score.is-faible { border-color: var(--bad); }
+.tc-score.is-faible strong { color: var(--bad); }
+
+.tc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.tc-primary, .tc-ghost {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+
+.tc-primary { border: 0; background: var(--ink); color: #fff; }
+.tc-primary:disabled { opacity: 0.4; cursor: wait; }
+.tc-ghost { border: 1px solid var(--line); background: transparent; color: var(--ink); }
+
+.tc-group {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+}
+
+.tc-group h2 { margin: 0 0 8px; font-size: 20px; }
+.tc-warning { color: var(--mid); font-weight: 600; }
+.tc-block { background: #1d1d1f; color: #f5f5f5; padding: 12px 14px; border-radius: 10px; overflow-x: auto; font-size: 13px; }
+
+.tc-help { margin-top: 32px; padding: 16px 20px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+.tc-help summary { font-weight: 700; cursor: pointer; }
+.tc-help li { margin: 6px 0; }

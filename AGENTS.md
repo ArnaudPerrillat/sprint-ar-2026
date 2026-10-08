@@ -16,8 +16,8 @@ Tu aides un·e étudiant·e en design (DNMade 2 Numérique, niveau de code débu
 
 - `core/` (moteur AR, tracking, aperçu, briques) ;
 - `scripts/`, `examples/`, `.github/`, `FICHE_ETUDIANT.md` ;
-- `index.html`, `package.json`, `package-lock.json`, `vite.config.ts`, `tsconfig.json`, `metadata.json` ;
-- `experience/target/` (la cible de l'affiche, fournie par l'enseignant).
+- `index.html`, `cibles.html`, `tools/`, `package.json`, `package-lock.json`, `vite.config.ts`, `tsconfig.json`, `metadata.json` ;
+- `experience/target/` (la cible de l'affiche : elle se génère avec l'outil https://arnaudperrillat.github.io/sprint-ar-2026/cibles.html ou est fournie par l'enseignant ; ne jamais l'écrire ni la modifier à la main).
 
 Si une demande semble nécessiter de toucher à ces fichiers, **ne le fais pas** : explique la limite et propose une solution avec les briques existantes, ou conseille de demander à l'enseignant. N'ajoute jamais de dépendance npm. Ne transforme pas le projet en application React, n'ajoute pas de framework.
 

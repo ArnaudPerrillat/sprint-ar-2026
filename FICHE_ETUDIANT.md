@@ -17,7 +17,7 @@ Objectif : voir ton affiche dans l'aperçu d'AI Studio avant de créer quoi que 
 - [ ] **1. Copier le projet** : sur [github.com/ArnaudPerrillat/sprint-ar-2026](https://github.com/ArnaudPerrillat/sprint-ar-2026), bouton **Use this template › Create a new repository**. Nom simple, sans espace ni accent (ex. `affiche-ra`).
 - [ ] **2. Activer la publication** : dans ton dépôt, **Settings › Pages › Source : GitHub Actions**.
 - [ ] **3. Ouvrir dans AI Studio** : [aistudio.google.com](https://aistudio.google.com), mode **Build**, bouton **+** › **Import from GitHub**, choisis ton dépôt.
-- [ ] **4. Déposer ta cible** : remplace le contenu de `experience/target/` par le dossier donné par l'enseignant.
+- [ ] **4. Générer et déposer ta cible** : sur [l'outil de cibles](https://arnaudperrillat.github.io/sprint-ar-2026/cibles.html), dépose le fichier final de ton affiche, vérifie le score de reconnaissance, télécharge le zip. Dézippe-le, puis sur GitHub, dans `experience/target/` : **Add file › Upload files** avec tous les fichiers, et **Commit changes**. Récupère ensuite les changements dans AI Studio.
 - [ ] **5. Lancer l'agent** : colle le message de `STARTER_PROMPT.md` (dans le projet) comme premier message, avec ton storyboard.
 
 Dans l'aperçu : **▶ Détection** rejoue l'arrivée sur l'affiche, **■ Perte** simule la perte, **Tap** simule un toucher, et tu tournes autour de l'affiche à la souris. Le menu en bas à gauche montre 5 exemples.

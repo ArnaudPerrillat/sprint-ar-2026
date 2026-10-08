@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Générer la cible de mon affiche</title>
+  </head>
+  <body>
+    <main class="tc">
+      <header class="tc-head">
+        <h1>Générer la cible de mon affiche</h1>
+        <p>Dépose le fichier final de ton affiche (tel qu'il sera imprimé) : tu récupères un dossier à mettre dans <code>experience/target/</code>. Tout se fait dans ton navigateur, rien n'est envoyé sur internet.</p>
+      </header>
+
+      <fieldset class="tc-mode">
+        <legend>Mon projet</legend>
+        <label><input type="radio" name="mode" value="single" checked /> Une seule affiche</label>
+        <label><input type="radio" name="mode" value="group" /> Plusieurs affiches (projet de groupe : puzzle, série…)</label>
+        <label class="tc-group-name" hidden>Nom du groupe <input type="text" id="group-name" value="groupe" maxlength="40" /></label>
+      </fieldset>
+
+      <label class="tc-drop" id="drop">
+        <input type="file" id="files" accept="image/png,image/jpeg,image/webp" multiple hidden />
+        <strong>Glisse ton affiche ici</strong>
+        <span>ou clique pour choisir un fichier (PNG ou JPG, 1500 px de large ou plus)</span>
+      </label>
+
+      <section id="results" class="tc-results" aria-live="polite"></section>
+      <section id="group" class="tc-group" hidden></section>
+
+      <details class="tc-help">
+        <summary>Que faire du dossier téléchargé ?</summary>
+        <ol>
+          <li>Dézippe le fichier téléchargé.</li>
+          <li>Sur GitHub, dans ton dépôt, ouvre le dossier <code>experience/target/</code>, puis <strong>Add file › Upload files</strong> : glisse <strong>tous</strong> les fichiers du dossier dézippé, puis <strong>Commit changes</strong>. Les fichiers de même nom sont remplacés ; tu peux laisser les anciens fichiers de démo.</li>
+          <li>Dans AI Studio, récupère les changements depuis GitHub (synchronisation), puis vérifie l'aperçu : c'est ton affiche qui doit apparaître.</li>
+          <li>Projet à plusieurs affiches : colle aussi le bloc <code>"targets"</code> dans <code>experience.json</code> (ou demande à l'agent de le faire).</li>
+        </ol>
+        <p>Ton affiche change ? Régénère la cible : une cible faite sur une autre version de l'affiche ne sera pas reconnue, ou le contenu sera décalé.</p>
+      </details>
+    </main>
+    <script type="module" src="./tools/cibles.ts"></script>
+  </body>
+</html>
