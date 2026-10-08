@@ -1,0 +1,64 @@
+{
+  "$schema": "../../core/schema/experience.schema.json",
+  "//": "EXEMPLE 5 — Plusieurs affiches qui forment un puzzle. Chaque affiche scannée remplit sa case dans la grille (mémorisée sur le téléphone). Quand les 4 sont trouvées : le puzzle complet se révèle. Pour tester dans l'aperçu : menu « Affiche : … » en bas, puis « ↺ Collection » pour recommencer.",
+  "title": "Affiche démo — puzzle",
+  "author": "DNMade 2 Numérique",
+  "theme": { "color": "#ff2d87", "textColor": "#ffffff", "font": "Space Grotesk" },
+  "//targets": "Une ligne par affiche. Les fichiers sont générés par l'enseignant (npm run targets -- dossier --group).",
+  "targets": [
+    { "id": "piece-1", "file": "piece-1.json" },
+    { "id": "piece-2", "file": "piece-2.json" },
+    { "id": "piece-3", "file": "piece-3.json" },
+    { "id": "piece-4", "file": "piece-4.json" }
+  ],
+  "bricks": [
+    {
+      "//": "La grille : une case par affiche, dans l'ordre de lecture (colonnes de gauche à droite, puis ligne suivante). Sans \"src\", la vignette est l'image de l'affiche.",
+      "id": "puzzle",
+      "type": "collection",
+      "columns": 2,
+      "pieces": [
+        { "target": "piece-1" },
+        { "target": "piece-2" },
+        { "target": "piece-3" },
+        { "target": "piece-4" }
+      ],
+      "position": "bottom",
+      "size": 0.32,
+      "hint": "Retrouve les 4 affiches",
+      "reveal": {
+        "title": "Puzzle complet !",
+        "image": "assets/demo/puzzle-complet.jpg",
+        "text": "Les quatre affiches réunies révèlent le propos. Ici, le groupe explique son intention, en quelques phrases."
+      }
+    },
+    { "//": "\"target\" = l'affiche sur laquelle la brique apparaît.", "id": "eclats-1", "type": "particles", "target": "piece-1", "preset": "sparkles", "color": "#ff2d87", "density": 0.2 },
+    { "id": "eclats-2", "type": "particles", "target": "piece-2", "preset": "sparkles", "color": "#1d4bff", "density": 0.2 },
+    { "id": "eclats-3", "type": "particles", "target": "piece-3", "preset": "sparkles", "color": "#141414", "density": 0.2 },
+    { "id": "eclats-4", "type": "particles", "target": "piece-4", "preset": "sparkles", "color": "#ffcc00", "density": 0.2 },
+    {
+      "//": "\"*\" = sur l'affiche visée, quelle qu'elle soit. \"collected\" = seulement quand toutes les affiches ont été trouvées.",
+      "id": "final",
+      "type": "model",
+      "src": "assets/demo/totem.glb",
+      "target": "*",
+      "trigger": { "type": "collected" },
+      "appear": "pop",
+      "duration": 900,
+      "z": 0.25,
+      "size": 0.55,
+      "animation": "danse",
+      "autoRotate": 30
+    },
+    {
+      "id": "fete",
+      "type": "particles",
+      "target": "*",
+      "trigger": { "type": "collected" },
+      "preset": "confetti",
+      "color": ["#ffcc00", "#ff2d87", "#1d4bff"],
+      "density": 0.4,
+      "z": 0.2
+    }
+  ]
+}

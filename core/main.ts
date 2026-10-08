@@ -3,7 +3,7 @@
 import './ui/styles.css'
 import coreIntegrity from 'virtual:core-integrity'
 import {parseJsonText, validateExperience, type Experience} from './schema/schema'
-import {loadTarget} from './ar/target'
+import {loadTargets} from './ar/target'
 import {chooseMode, experienceUrl, query} from './util/env'
 import {report, reportAll, errorMessage} from './ui/errors'
 import {Runtime} from './runtime'
@@ -40,15 +40,15 @@ const boot = async () => {
   const experience = await loadExperience()
   applyTheme(experience.theme)
   document.title = experience.title
-  const target = await loadTarget(experience.target)
+  const targets = await loadTargets(experience)
 
   let mode = chooseMode()
-  if (mode === 'ar' && !target.data) mode = 'preview'
+  if (mode === 'ar' && !targets.some((t) => t.data)) mode = 'preview'
 
   if (mode === 'preview') {
     document.body.classList.add('is-preview')
-    const stage = new PreviewStage(canvas, target.poster)
-    const runtime = new Runtime(stage, experience, target.poster, exampleBase)
+    const stage = new PreviewStage(canvas, targets)
+    const runtime = new Runtime(stage, experience, targets, exampleBase)
     await stage.start(runtime.events)
     mountDebugBar(stage, runtime)
     await runtime.init()
@@ -62,7 +62,7 @@ const boot = async () => {
   const {ArStage} = await import('./ar/ar-session')
   const aim = createAimGuide()
   let runtime: Runtime | null = null
-  const stage = new ArStage(canvas, target, (status) => {
+  const stage = new ArStage(canvas, targets, (status) => {
     switch (status.kind) {
       case 'engine-loading':
         showLoading('Chargement du moteur AR…')
@@ -84,7 +84,7 @@ const boot = async () => {
         } else report('error', `Erreur AR : ${status.detail ?? 'inconnue'}`)
     }
   })
-  runtime = new Runtime(stage, experience, target.poster, exampleBase)
+  runtime = new Runtime(stage, experience, targets, exampleBase)
   runtime.onTrackingChange((tracked) => aim.set(!tracked))
   // Unlock audio inside the start gesture's task.
   runtime.sound.unlock()

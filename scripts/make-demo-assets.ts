@@ -142,7 +142,69 @@ const black = () => {
   return svg(s)
 }
 
+// --- Puzzle demo: one artwork cut into 2×2 posters ------------------------------------------
+// Each piece also gets strong unique features (giant numeral, own pattern, own text) so the
+// engine never confuses two pieces. Outputs examples/puzzle/piece-N.png (to build targets with
+// `npm run targets -- examples/puzzle --group --into experience/target`) and the full picture.
+const makePuzzle = async () => {
+  const PW = W * 2
+  const PH = H * 2
+  const [Y, P, B, K] = INKS.map((i) => i.color)
+  const font = 'Arial Black, Arial, Helvetica, sans-serif'
+  let s = `<rect width="${PW}" height="${PH}" fill="${PAPER}"/>`
+  // Shapes crossing the cuts, so the pieces visibly belong together.
+  s += `<circle cx="${PW * 0.5}" cy="${PH * 0.5}" r="${PW * 0.3}" fill="${Y}"/>`
+  s += `<path d="M0 ${PH * 0.18} L${PW} ${PH * 0.62} L${PW} ${PH * 0.72} L0 ${PH * 0.28} Z" fill="${B}" opacity="0.92"/>`
+  s += `<circle cx="${PW * 0.5}" cy="${PH * 0.5}" r="${PW * 0.16}" fill="none" stroke="${P}" stroke-width="70"/>`
+  s += `<text x="${PW / 2}" y="${PH * 0.53}" text-anchor="middle" font-family="${font}" font-size="300" fill="${K}" letter-spacing="-10">LE PROPOS</text>`
+  // One pattern family per quarter.
+  const quarters = [[0, 0], [1, 0], [0, 1], [1, 1]] as const
+  quarters.forEach(([qx, qy], i) => {
+    const x0 = qx * W
+    const y0 = qy * H
+    const clip = `clip-path="url(#q${i})"`
+    s += `<clipPath id="q${i}"><rect x="${x0}" y="${y0}" width="${W}" height="${H}"/></clipPath>`
+    let pattern = ''
+    for (let k = 0; k < 260; k++) {
+      const x = x0 + r(40, W - 40)
+      const y = y0 + r(40, H - 40)
+      const size = r(10, 34)
+      if (i === 0) pattern += `<circle cx="${x}" cy="${y}" r="${size / 2}" fill="${P}"/>`
+      else if (i === 1) pattern += `<rect x="${x}" y="${y}" width="${size}" height="${size}" fill="${B}" transform="rotate(${r(0, 90)} ${x} ${y})"/>`
+      else if (i === 2) pattern += `<path d="M${x - size} ${y} H${x + size} M${x} ${y - size} V${y + size}" stroke="${K}" stroke-width="7"/>`
+      else pattern += `<polygon points="${x},${y - size} ${x + size},${y + size} ${x - size},${y + size}" fill="${P}"/>`
+    }
+    s += `<g ${clip}>${pattern}</g>`
+    // Giant numeral in the outer corner of each piece.
+    const nx = qx ? x0 + W - 80 : x0 + 80
+    const ny = qy ? y0 + H - 90 : y0 + 560
+    s += `<text x="${nx}" y="${ny}" text-anchor="${qx ? 'end' : 'start'}" font-family="${font}" font-size="560" fill="none" stroke="${K}" stroke-width="16">${i + 1}</text>`
+    const ty = qy ? y0 + H - 90 : y0 + 120
+    s += `<text x="${x0 + (qx ? 80 : W - 80)}" y="${ty}" text-anchor="${qx ? 'start' : 'end'}" font-family="Arial, sans-serif" font-weight="700" font-size="38" fill="${K}">PIÈCE ${i + 1}/4 — RETROUVE LES AUTRES</text>`
+    let bx = x0 + (qx ? 80 : W - 480)
+    const by = ty + (qy ? -160 : 30)
+    const stop = bx + 400
+    while (bx < stop) {
+      const bw = r(3, 12)
+      s += `<rect x="${bx}" y="${by}" width="${bw}" height="90" fill="${K}"/>`
+      bx += bw + r(3, 10)
+    }
+  })
+  const full = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${PW}" height="${PH}">${s}</svg>`)).png().toBuffer()
+  const dir = join(root, 'examples', 'puzzle')
+  mkdirSync(dir, {recursive: true})
+  for (const [i, [qx, qy]] of quarters.entries()) {
+    await sharp(full).extract({left: qx * W, top: qy * H, width: W, height: H}).png().toFile(join(dir, `piece-${i + 1}.png`))
+  }
+  await sharp(full).resize({width: 1000}).jpeg({quality: 82}).toFile(join(assetsDir, 'puzzle-complet.jpg'))
+  console.log('✔ puzzle : 4 pièces dans examples/puzzle/ + assets/demo/puzzle-complet.jpg')
+}
+
 const main = async () => {
+  if (process.argv.includes('--puzzle')) {
+    await makePuzzle()
+    return
+  }
   const builders = [yellow, pink, blue, black]
   const films: Buffer[] = []
   for (let i = 0; i < INKS.length; i++) {

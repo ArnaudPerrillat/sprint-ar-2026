@@ -1,11 +1,12 @@
 // Camera-less preview: the poster on a plane, OrbitControls, and debug buttons that replay the
 // experience as if the target were detected. This is where students iterate in AI Studio.
+// With several posters, one is shown at a time; switching simulates "lost" + "found".
 
 import * as THREE from 'three'
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js'
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js'
 import type {Stage, StageEvents} from '../stage'
-import type {PosterInfo} from '../ar/target'
+import type {PosterInfo, PosterTarget} from '../ar/target'
 import {createAnchorDebug} from '../ar/poster-anchor'
 import {query} from '../util/env'
 
@@ -14,13 +15,13 @@ export class PreviewStage implements Stage {
   readonly scene = new THREE.Scene()
   readonly camera: THREE.PerspectiveCamera
   readonly renderer: THREE.WebGLRenderer
-  readonly posterRoot = new THREE.Group()
+  readonly posterRoots = new Map<string, THREE.Group>()
   readonly controls: OrbitControls
   private events: StageEvents | null = null
   private last = performance.now()
-  private homeDistance: number
+  private _current: string
 
-  constructor(readonly canvas: HTMLCanvasElement, private readonly poster: PosterInfo) {
+  constructor(readonly canvas: HTMLCanvasElement, private readonly targets: PosterTarget[]) {
     this.renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: false})
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -29,11 +30,6 @@ export class PreviewStage implements Stage {
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
 
     this.camera = new THREE.PerspectiveCamera(45, 1, 0.01, 50)
-    // Fit the whole poster with some margin.
-    const fitHeight = Math.max(poster.ratio, 1 / Math.max(window.innerWidth / window.innerHeight, 0.3))
-    this.homeDistance = (fitHeight / 2) / Math.tan(THREE.MathUtils.degToRad(22.5)) * 1.25
-    this.camera.position.set(0, 0, this.homeDistance)
-
     this.controls = new OrbitControls(this.camera, canvas)
     this.controls.enableDamping = true
     this.controls.minDistance = 0.25
@@ -47,25 +43,43 @@ export class PreviewStage implements Stage {
     const dir = new THREE.DirectionalLight(0xffffff, 1.5)
     dir.position.set(1, 2, 3)
     this.scene.add(dir)
-    this.scene.add(this.posterRoot)
-    this.addPoster()
-    if (query.debug === 'anchor') this.posterRoot.add(createAnchorDebug(poster))
+
+    for (const target of targets) {
+      const root = new THREE.Group()
+      root.name = `poster:${target.id}`
+      root.visible = false
+      this.addPoster(root, target.poster)
+      if (query.debug === 'anchor') root.add(createAnchorDebug(target.poster))
+      this.posterRoots.set(target.id, root)
+      this.scene.add(root)
+    }
+    this._current = targets[0].id
+    this.posterRoots.get(this._current)!.visible = true
+    this.resetView()
   }
 
-  private addPoster(): void {
-    const {ratio, imageUrl, imageQuarterTurns} = this.poster
+  get current(): string {
+    return this._current
+  }
+
+  get ids(): string[] {
+    return this.targets.map((t) => t.id)
+  }
+
+  private addPoster(root: THREE.Group, poster: PosterInfo): void {
+    const {ratio, imageUrl, imageQuarterTurns} = poster
     const material = new THREE.MeshBasicMaterial({color: imageUrl ? 0xffffff : 0xdedad2, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1})
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, ratio), material)
     mesh.name = 'poster'
     mesh.position.z = -0.001
-    this.posterRoot.add(mesh)
+    root.add(mesh)
     // Thin board behind the paper so the poster reads as an object in space.
     const board = new THREE.Mesh(
       new THREE.BoxGeometry(1.02, ratio + 0.02, 0.01),
       new THREE.MeshStandardMaterial({color: 0x151515, roughness: 0.9}),
     )
     board.position.z = -0.007
-    this.posterRoot.add(board)
+    root.add(board)
     if (!imageUrl) return
     new THREE.TextureLoader().load(imageUrl, (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace
@@ -79,8 +93,13 @@ export class PreviewStage implements Stage {
     })
   }
 
+  // Fit the whole current poster in view, face on.
   resetView(): void {
-    this.camera.position.set(0, 0, this.homeDistance)
+    const ratio = this.targets.find((t) => t.id === this._current)!.poster.ratio
+    const aspect = Math.max(window.innerWidth / window.innerHeight, 0.3)
+    const fitHeight = Math.max(ratio, 1 / aspect)
+    const distance = (fitHeight / 2) / Math.tan(THREE.MathUtils.degToRad(22.5)) * 1.25
+    this.camera.position.set(0, 0, distance)
     this.controls.target.set(0, 0, 0)
     this.controls.update()
   }
@@ -120,10 +139,21 @@ export class PreviewStage implements Stage {
   }
 
   simulateFound(): void {
-    this.events?.found()
+    this.events?.found(this._current)
   }
 
   simulateLost(): void {
-    this.events?.lost()
+    this.events?.lost(this._current)
+  }
+
+  // Show another poster: the previous one is "lost", the new one "found".
+  switchTo(id: string): void {
+    if (id === this._current || !this.posterRoots.has(id)) return
+    this.events?.lost(this._current)
+    this.posterRoots.get(this._current)!.visible = false
+    this._current = id
+    this.posterRoots.get(id)!.visible = true
+    this.resetView()
+    this.events?.found(id)
   }
 }

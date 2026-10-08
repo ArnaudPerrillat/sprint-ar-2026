@@ -7,7 +7,7 @@ import type * as THREE_NS from 'three'
 
 export interface BrickHandle {
   readonly id: string
-  readonly type: 'layers' | 'video' | 'model' | 'particles' | 'ui'
+  readonly type: 'layers' | 'video' | 'model' | 'particles' | 'ui' | 'collection'
   // Content of the brick (move / rotate / scale it freely).
   readonly object3d: THREE_NS.Object3D
   readonly shown: boolean
@@ -47,8 +47,19 @@ export interface TweenOptions {
 
 export interface Ctx {
   readonly THREE: typeof THREE_NS
-  // Group anchored on the poster: origin at its centre, 1 unit = poster width, +Y up, +Z out.
+  // Group anchored on the poster being looked at (the last one found): origin at its centre,
+  // 1 unit = poster width, +Y up, +Z out.
   readonly poster: THREE_NS.Group
+  // id of that poster ("main" with a single poster, or an id of "targets"); null if none in view.
+  readonly target: string | null
+  // Posters found so far (remembered on the phone).
+  readonly collection: {
+    has(targetId: string): boolean
+    list(): string[]
+    readonly count: number
+    readonly total: number
+    readonly complete: boolean
+  }
   readonly mode: 'ar' | 'preview'
   readonly view: View
   readonly device: Device
@@ -83,8 +94,9 @@ export interface TapHit {
 }
 
 export interface Behavior {
-  onFound?(ctx: Ctx): void
-  onLost?(ctx: Ctx): void
+  // targetId: the poster that was found / lost.
+  onFound?(ctx: Ctx, targetId: string): void
+  onLost?(ctx: Ctx, targetId: string): void
   onTap?(ctx: Ctx, hit: TapHit): void
   // t: time since start in seconds, dt: time since last frame in seconds.
   onUpdate?(ctx: Ctx, t: number, dt: number): void

@@ -7,6 +7,7 @@ import {VideoBrickImpl} from './video'
 import {ModelBrickImpl} from './model'
 import {ParticlesBrickImpl} from './particles'
 import {UiBrickImpl} from './ui'
+import {CollectionBrickImpl} from './collection'
 
 export const createBrick = (config: Brick, env: BrickEnv): BrickBase => {
   switch (config.type) {
@@ -20,5 +21,7 @@ export const createBrick = (config: Brick, env: BrickEnv): BrickBase => {
       return new ParticlesBrickImpl(config, env)
     case 'ui':
       return new UiBrickImpl(config, env)
+    case 'collection':
+      return new CollectionBrickImpl(config, env)
   }
 }

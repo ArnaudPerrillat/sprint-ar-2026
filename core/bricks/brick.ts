@@ -5,6 +5,7 @@ import type {Brick} from '../schema/schema'
 import {toLocal} from '../ar/poster-anchor'
 import type {Tweens, TweenHandle} from '../util/tween'
 import type {Sound} from '../util/sound'
+import type {Collection} from '../collection'
 
 export interface ViewState {
   // Angle between the poster normal and the direction poster -> camera, in degrees (0 = face on).
@@ -17,13 +18,15 @@ export interface ViewState {
 }
 
 export interface BrickEnv {
-  ratio: number
   tweens: Tweens
   sound: Sound
   camera: THREE.Camera
   renderer: THREE.WebGLRenderer
   overlay: HTMLElement
   mode: 'ar' | 'preview'
+  collection: Collection
+  // Poster id -> image of the whole poster (used as default thumbnail by the collection brick).
+  posterImages: ReadonlyMap<string, string | null>
 }
 
 type FadeMaterial = THREE.Material & {
@@ -39,13 +42,15 @@ export abstract class BrickBase<T extends Brick = Brick> {
   shown = false
   private fade = 1
   private anim: TweenHandle | null = null
+  // height / width of the poster the brick is attached to.
+  protected ratio = Math.SQRT2
+  // Poster id the brick currently lives on.
+  posterId: string | null = null
 
   constructor(readonly config: T, protected readonly env: BrickEnv) {
     this.holder.name = `brick:${config.id}`
     this.holder.add(this.content)
     this.holder.visible = false
-    const p = toLocal(env.ratio, config.x, config.y, config.z)
-    this.holder.position.copy(p)
     const r = config.rotation
     if (typeof r === 'number') {
       this.content.rotation.set(0, 0, THREE.MathUtils.degToRad(-r))
@@ -60,6 +65,14 @@ export abstract class BrickBase<T extends Brick = Brick> {
 
   get id(): string {
     return this.config.id
+  }
+
+  // (Re)places the brick on a poster. Positions are recomputed for that poster's proportions.
+  attach(posterId: string, root: THREE.Object3D, ratio: number): void {
+    this.posterId = posterId
+    this.ratio = ratio
+    root.add(this.holder)
+    this.holder.position.copy(toLocal(ratio, this.config.x, this.config.y, this.config.z))
   }
 
   abstract load(): Promise<void>
@@ -83,7 +96,7 @@ export abstract class BrickBase<T extends Brick = Brick> {
     this.onShow()
     const {appear, duration} = this.config
     const holder = this.holder
-    const base = toLocal(this.env.ratio, this.config.x, this.config.y, this.config.z)
+    const base = toLocal(this.ratio, this.config.x, this.config.y, this.config.z)
     if (appear === 'none' || duration === 0) {
       holder.scale.setScalar(1)
       holder.position.copy(base)
@@ -104,7 +117,7 @@ export abstract class BrickBase<T extends Brick = Brick> {
     this.shown = false
     this.anim?.cancel()
     this.onHide()
-    const base = toLocal(this.env.ratio, this.config.x, this.config.y, this.config.z)
+    const base = toLocal(this.ratio, this.config.x, this.config.y, this.config.z)
     const duration = fast ? 200 : Math.min(this.config.duration, 400)
     if (this.config.appear === 'none' || duration === 0) {
       this.holder.visible = false

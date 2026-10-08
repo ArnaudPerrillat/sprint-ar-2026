@@ -118,3 +118,24 @@ export const loadTarget = async (fileName: string): Promise<LoadedTarget> => {
     },
   }
 }
+
+export interface PosterTarget extends LoadedTarget {
+  // Id used in experience.json ("targets" id, or "main" for a single poster).
+  id: string
+}
+
+// Loads every poster of the experience ("targets", or the single "target" file).
+export const loadTargets = async (exp: {target: string; targets?: {id: string; file: string}[]}): Promise<PosterTarget[]> => {
+  const list = exp.targets ?? [{id: 'main', file: exp.target}]
+  const loaded = await Promise.all(list.map(async ({id, file}) => ({id, ...(await loadTarget(file))})))
+  const names = new Map<string, string>()
+  for (const t of loaded) {
+    if (!t.data) continue
+    const other = names.get(t.data.name)
+    if (other) {
+      report('error', `Les affiches « ${other} » et « ${t.id} » ont la même cible (« ${t.data.name} ») : régénère-les avec des noms de fichiers différents.`)
+    }
+    names.set(t.data.name, t.id)
+  }
+  return loaded
+}

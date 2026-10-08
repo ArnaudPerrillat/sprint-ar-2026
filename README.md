@@ -64,6 +64,7 @@ Ton expérience est une liste de **briques** (3 maximum, la brique `ui` ne compt
 | `{ "type": "tilt", "min": 30 }` | tant qu'on regarde l'affiche de biais (plus de 30°) |
 | `{ "type": "distance", "near": 0.8 }` | tant qu'on est proche (moins de 0,8 largeur d'affiche) |
 | `{ "type": "distance", "far": 2 }` | tant qu'on est loin (plus de 2 largeurs) |
+| `{ "type": "collected" }` | quand toutes les affiches ont été trouvées (voir « Plusieurs affiches ») |
 
 Options communes : `"delay": 500` (attente supplémentaire en ms), `"appear": "fade" | "pop" | "rise" | "none"`, `"duration": 600` (durée de l'apparition en ms), `"opacity": 1`, `"rotation": 15` (en degrés).
 
@@ -201,6 +202,59 @@ Un PNG transparent par couleur imprimée, **dans l'ordre d'impression**. Exporte
 
 ---
 
+## Plusieurs affiches et collection (puzzle, série, chasse au trésor)
+
+Un même site peut reconnaître **plusieurs affiches** (16 maximum, 8 conseillées). Exemple complet : [`examples/05-puzzle`](examples/05-puzzle) — dans l'aperçu, choisis « Exemple 5 », puis change d'affiche avec le menu « ▣ piece-1 ».
+
+1. L'enseignant génère toutes les cibles du groupe d'un coup et te donne le bloc `targets` à coller :
+
+```json
+"targets": [
+  { "id": "piece-1", "file": "piece-1.json" },
+  { "id": "piece-2", "file": "piece-2.json" },
+  { "id": "piece-3", "file": "piece-3.json" }
+]
+```
+
+2. Chaque brique choisit son affiche avec `"target"` :
+   - `"target": "piece-2"` : la brique n'apparaît que sur l'affiche 2 ;
+   - `"target": "*"` : sur l'affiche visée, quelle qu'elle soit ;
+   - sans `"target"` : sur la première affiche de la liste.
+   Le conseil « 3 briques maximum » s'applique **par affiche**.
+
+3. La brique **`collection`** affiche une grille en bas (ou en haut) de l'écran : chaque affiche trouvée remplit sa case. La collection est **mémorisée sur le téléphone** (elle survit à un rechargement ; un bouton ↺ permet de recommencer).
+
+```json
+{
+  "id": "puzzle",
+  "type": "collection",
+  "columns": 3,
+  "pieces": [
+    { "target": "piece-1" },
+    { "target": "piece-2" },
+    { "target": "piece-3", "src": "assets/vignette-3.png" }
+  ],
+  "position": "bottom",
+  "size": 0.4,
+  "hint": "Retrouve les 3 affiches",
+  "reveal": { "title": "Bravo !", "image": "assets/puzzle-complet.jpg", "text": "Le propos…", "link": "https://..." }
+}
+```
+
+- Les cases se remplissent dans l'ordre de lecture (de gauche à droite, puis ligne suivante). Par défaut, la vignette est l'image de l'affiche ; `src` permet d'en choisir une autre (par ex. un fragment du puzzle).
+- `reveal` : le panneau qui s'ouvre quand tout est trouvé (on peut le rouvrir en touchant la grille).
+- La grille est toujours visible : son `trigger` est ignoré.
+
+4. Le déclencheur **`{ "type": "collected" }`** fait apparaître une brique quand toutes les affiches ont été trouvées (ou `"count": 2` pour « au moins 2 »). Combiné à `"target": "*"`, le final apparaît sur n'importe quelle affiche :
+
+```json
+{ "id": "final", "type": "model", "src": "assets/final.glb", "target": "*", "trigger": { "type": "collected" } }
+```
+
+> La collection est enregistrée **dans le navigateur du téléphone** : un autre téléphone, un autre navigateur ou la navigation privée repartent de zéro.
+
+---
+
 ## Niveau avancé : les behaviors
 
 Un behavior est un petit fichier JavaScript dans `experience/behaviors/`, pour ce que les briques ne savent pas faire. Exemple complet : [`examples/04-behavior`](examples/04-behavior).
@@ -228,6 +282,7 @@ Ce que contient `ctx` (détail dans `core/behaviors.d.ts`) :
 - `ctx.device` : orientation du téléphone (`beta`, `gamma`) ;
 - `ctx.THREE`, `ctx.poster`, `ctx.toLocal(x, y, z)` ;
 - `ctx.tween({...})`, `ctx.sound.play('assets/pop.mp3')` ;
+- `ctx.target` (affiche visée), `ctx.collection` (`has(id)`, `count`, `total`, `complete`) ;
 - `ctx.state` : mémoire libre ; `ctx.log('message')` : affiche un message.
 
 Si ton behavior plante, l'erreur s'affiche dans le panneau ; après 3 erreurs dans `onUpdate`, il est désactivé, et le reste de l'expérience continue.
@@ -278,7 +333,7 @@ npm install
 |---|---|
 | `npm run dev` | serveur HTTPS sur le réseau local + QR code dans le terminal (tester sur téléphone, même Wi-Fi ; accepter le certificat auto-signé) |
 | `npm run dev:http` | même chose sans HTTPS (aperçu sur ordinateur uniquement) |
-| `npm run targets` | génère les cibles : `posters/prenom-nom.png` → `targets-out/prenom-nom/` (voir [posters/README.md](posters/README.md)) |
+| `npm run targets` | génère les cibles : `posters/prenom-nom.png` → `targets-out/prenom-nom/` ; `-- posters/groupe --group` pour un projet à plusieurs affiches (voir [posters/README.md](posters/README.md)) |
 | `npm run check` | vérifie `experience/` (schéma, fichiers, poids, vidéos, behaviors, core) ; `-- examples/02-video` pour un exemple |
 | `npm run build` | build de production dans `dist/` (c'est ce que fait la GitHub Action) |
 | `npm run core:seal` | enregistre l'empreinte de `core/` (à relancer après toute modification volontaire du core) |

@@ -1,10 +1,13 @@
-// Runtime: turns a validated experience into bricks inside posterRoot, and drives triggers,
-// taps and behaviors from the stage events (found / lost / tap / frame).
+// Runtime: turns a validated experience into bricks anchored on the posters, and drives triggers,
+// taps, the collection and behaviors from the stage events (found / lost / tap / frame).
+//
+// Each brick lives on one poster (its "target", default: the first poster), or on "*" = whichever
+// poster is being looked at (it moves to the poster found most recently).
 
 import * as THREE from 'three'
-import type {Experience} from './schema/schema'
+import {brickTarget, targetIds, type Experience} from './schema/schema'
 import type {Stage, StageEvents} from './stage'
-import type {PosterInfo} from './ar/target'
+import type {PosterTarget} from './ar/target'
 import {fromLocal, toLocal} from './ar/poster-anchor'
 import {BrickBase, type BrickEnv, type ViewState} from './bricks/brick'
 import {createBrick} from './bricks'
@@ -14,10 +17,11 @@ import {experienceUrl} from './util/env'
 import {report, errorMessage} from './ui/errors'
 import type {Behavior, BrickHandle, Ctx, TapHit} from './behaviors'
 import {mountSoundButton} from './ui/sound-button'
+import {Collection} from './collection'
 
 interface Scheduled {
+  brick: BrickBase
   remaining: number
-  run: () => void
 }
 
 interface LoadedBehavior {
@@ -27,6 +31,12 @@ interface LoadedBehavior {
   disabled: boolean
 }
 
+interface Poster {
+  root: THREE.Group
+  ratio: number
+  tapPlane: THREE.Mesh
+}
+
 const MAX_UPDATE_ERRORS = 3
 
 export class Runtime {
@@ -34,29 +44,39 @@ export class Runtime {
   readonly sound = new Sound()
   readonly view: ViewState = {tilt: 0, tiltX: 0, tiltY: 0, distance: 1}
   readonly device = {alpha: 0, beta: 0, gamma: 0}
-  tracked = false
+  readonly collection: Collection
+  readonly ids: string[]
+  // Posters currently tracked, and the one found most recently (null when none).
+  readonly tracked = new Set<string>()
+  current: string | null = null
 
+  private posters = new Map<string, Poster>()
   private bricks: BrickBase[] = []
   private behaviors: LoadedBehavior[] = []
   private scheduled = new Map<string, Scheduled>()
-  private everFound = false
+  private everFound = new Set<string>()
   private shownBeforeLost = new Set<string>()
   private ready = false
-  private pendingFound = false
+  private pending: {kind: 'found' | 'lost'; id: string}[] = []
   private elapsed = 0
   private ctx!: Ctx
   private raycaster = new THREE.Raycaster()
-  private tapPlane!: THREE.Mesh
   private overlay: HTMLElement
   private listeners = new Set<(tracked: boolean) => void>()
 
   constructor(
     private readonly stage: Stage,
     readonly experience: Experience,
-    readonly poster: PosterInfo,
+    readonly targets: PosterTarget[],
     // Folder holding behaviors/ ("" = experience/, or examples/<name>/ for the examples).
     private readonly behaviorsBase = '',
   ) {
+    this.ids = targetIds(experience)
+    this.collection = new Collection(this.ids, `${behaviorsBase}${experience.title}`)
+    // After a reset, the poster(s) in view count again straight away.
+    this.collection.onChange((_c, added) => {
+      if (added === null) this.tracked.forEach((id) => this.collection.add(id))
+    })
     this.overlay = document.getElementById('ra-hotspots') ?? document.body
     window.addEventListener('deviceorientation', (e) => {
       this.device.alpha = e.alpha ?? 0
@@ -67,8 +87,8 @@ export class Runtime {
 
   // Stage callbacks. They are safe to call before init() completes.
   readonly events: StageEvents = {
-    found: () => (this.ready ? this.onFound() : (this.pendingFound = true)),
-    lost: () => (this.ready ? this.onLost() : (this.pendingFound = false)),
+    found: (id) => (this.ready ? this.onFound(id) : this.pending.push({kind: 'found', id})),
+    lost: (id) => (this.ready ? this.onLost(id) : this.pending.push({kind: 'lost', id})),
     tap: (x, y) => this.ready && this.onTap(x, y),
     frame: (t, dt) => this.ready && this.onFrame(t, dt),
   }
@@ -77,31 +97,44 @@ export class Runtime {
     this.listeners.add(cb)
   }
 
+  private notify(): void {
+    this.listeners.forEach((cb) => cb(this.tracked.size > 0))
+  }
+
   async init(): Promise<void> {
-    const {posterRoot, camera, renderer, mode} = this.stage
+    const {posterRoots, camera, renderer, mode} = this.stage
+    const posterImages = new Map(this.targets.map((t) => [t.id, t.poster.imageUrl]))
     const env: BrickEnv = {
-      ratio: this.poster.ratio,
       tweens: this.tweens,
       sound: this.sound,
       camera,
       renderer,
       overlay: this.overlay,
       mode,
+      collection: this.collection,
+      posterImages,
     }
 
-    // Invisible plane used to turn taps into poster coordinates.
-    this.tapPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(1, this.poster.ratio),
-      new THREE.MeshBasicMaterial({visible: false}),
-    )
-    this.tapPlane.name = 'tap-plane'
-    posterRoot.add(this.tapPlane)
+    for (const target of this.targets) {
+      const root = posterRoots.get(target.id)
+      if (!root) continue
+      // Invisible plane used to turn taps into poster coordinates.
+      const tapPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(1, target.poster.ratio),
+        new THREE.MeshBasicMaterial({visible: false}),
+      )
+      tapPlane.name = 'tap-plane'
+      root.add(tapPlane)
+      this.posters.set(target.id, {root, ratio: target.poster.ratio, tapPlane})
+    }
 
     for (const config of this.experience.bricks) {
       try {
         const brick = createBrick(config, env)
+        const home = config.target === '*' ? this.ids[0] : brickTarget(config, this.ids)
+        const poster = this.posters.get(home)
+        if (poster) brick.attach(home, poster.root, poster.ratio)
         this.bricks.push(brick)
-        posterRoot.add(brick.holder)
       } catch (err) {
         report('error', `La brique « ${config.id} » n'a pas pu être créée : ${errorMessage(err)}`)
       }
@@ -117,45 +150,89 @@ export class Runtime {
 
     // A video with sound needs a way to turn it on.
     if (this.experience.bricks.some((b) => b.type === 'video' && b.sound)) mountSoundButton(this.sound)
+    // The collection grid is screen UI: always visible.
+    for (const brick of this.bricks) if (brick.config.type === 'collection') brick.show()
 
     this.ctx = this.createCtx()
     await this.loadBehaviors()
 
     this.ready = true
-    if (this.pendingFound) this.onFound()
+    for (const event of this.pending) event.kind === 'found' ? this.onFound(event.id) : this.onLost(event.id)
+    this.pending = []
   }
 
   // -------------------------------------------------------------------------
   // Tracking
 
-  private onFound(): void {
-    this.tracked = true
-    this.listeners.forEach((cb) => cb(true))
-    const replay = !this.everFound || this.experience.replayOnFound
-    this.everFound = true
-    if (replay) {
-      this.scheduled.clear()
-      this.bricks.forEach((b) => b.reset())
-      for (const brick of this.bricks) {
-        const {trigger, delay} = brick.config
-        if (trigger.type === 'found') this.schedule(brick, delay)
-        else if (trigger.type === 'delay') this.schedule(brick, trigger.ms + delay)
-      }
-    } else {
-      for (const brick of this.bricks) if (this.shownBeforeLost.has(brick.id)) brick.show()
-    }
-    this.callBehaviors('onFound')
+  private isFloating(brick: BrickBase): boolean {
+    return brick.config.target === '*'
   }
 
-  private onLost(): void {
-    this.tracked = false
-    this.listeners.forEach((cb) => cb(false))
-    if (this.experience.onLost === 'hide') {
-      this.shownBeforeLost = new Set(this.bricks.filter((b) => b.shown).map((b) => b.id))
-      this.scheduled.clear()
-      this.bricks.forEach((b) => b.hide(true))
+  private isScreenUi(brick: BrickBase): boolean {
+    return brick.config.type === 'collection'
+  }
+
+  // Starts (or restores) a brick on its poster after a detection.
+  private startBrick(brick: BrickBase, replay: boolean): void {
+    if (replay) {
+      this.scheduled.delete(brick.id)
+      brick.reset()
+      const {trigger, delay} = brick.config
+      if (trigger.type === 'found') this.schedule(brick, delay)
+      else if (trigger.type === 'delay') this.schedule(brick, trigger.ms + delay)
+    } else if (this.shownBeforeLost.has(brick.id)) {
+      brick.show()
     }
-    this.callBehaviors('onLost')
+  }
+
+  private moveFloating(brick: BrickBase, id: string): void {
+    const poster = this.posters.get(id)
+    if (!poster) return
+    this.scheduled.delete(brick.id)
+    brick.reset()
+    brick.attach(id, poster.root, poster.ratio)
+    this.startBrick(brick, true)
+  }
+
+  private onFound(id: string): void {
+    const replay = !this.everFound.has(id) || this.experience.replayOnFound
+    this.tracked.add(id)
+    this.current = id
+    this.everFound.add(id)
+    this.collection.add(id)
+    this.notify()
+    for (const brick of this.bricks) {
+      if (this.isScreenUi(brick)) continue
+      if (this.isFloating(brick)) {
+        if (brick.posterId !== id) this.moveFloating(brick, id)
+        else this.startBrick(brick, replay)
+      } else if (brick.posterId === id) {
+        this.startBrick(brick, replay)
+      }
+    }
+    this.callBehaviors('onFound', id)
+  }
+
+  private onLost(id: string): void {
+    if (!this.tracked.has(id)) return
+    this.tracked.delete(id)
+    if (this.current === id) this.current = [...this.tracked].pop() ?? null
+    this.notify()
+    for (const brick of this.bricks) {
+      if (this.isScreenUi(brick) || brick.posterId !== id) continue
+      // Content following "*" jumps to another poster that is still in view.
+      if (this.isFloating(brick) && this.current) {
+        this.moveFloating(brick, this.current)
+        continue
+      }
+      if (this.experience.onLost === 'hide') {
+        if (brick.shown) this.shownBeforeLost.add(brick.id)
+        else this.shownBeforeLost.delete(brick.id)
+        this.scheduled.delete(brick.id)
+        brick.hide(true)
+      }
+    }
+    this.callBehaviors('onLost', id)
   }
 
   private schedule(brick: BrickBase, ms: number): void {
@@ -164,54 +241,60 @@ export class Runtime {
       brick.show()
       return
     }
-    this.scheduled.set(brick.id, {remaining: ms, run: () => brick.show()})
+    this.scheduled.set(brick.id, {brick, remaining: ms})
   }
 
-  // Content keeps living while frozen after a loss.
-  private get active(): boolean {
-    return this.tracked || (this.everFound && this.experience.onLost === 'freeze')
+  // A poster's content keeps living while frozen after a loss.
+  private posterActive(id: string | null): boolean {
+    if (!id) return false
+    return this.tracked.has(id) || (this.everFound.has(id) && this.experience.onLost === 'freeze')
+  }
+
+  private get anyActive(): boolean {
+    return this.ids.some((id) => this.posterActive(id))
   }
 
   // -------------------------------------------------------------------------
   // Frame loop
 
-  private onFrame(timeMs: number, dtMs: number): void {
+  private onFrame(_timeMs: number, dtMs: number): void {
     const dt = Math.min(dtMs, 100)
     this.elapsed += dt
     this.tweens.update(dt)
     this.updateView()
 
-    if (this.active) {
-      for (const [id, s] of this.scheduled) {
-        s.remaining -= dt
-        if (s.remaining <= 0) {
-          this.scheduled.delete(id)
-          s.run()
-        }
-      }
-    }
-
-    if (this.tracked) {
-      for (const brick of this.bricks) {
-        const {trigger} = brick.config
-        let condition: boolean | null = null
-        if (trigger.type === 'tilt') {
-          condition = this.view.tilt >= trigger.min && this.view.tilt <= trigger.max
-        } else if (trigger.type === 'distance') {
-          condition = (trigger.near === undefined || this.view.distance <= trigger.near) &&
-            (trigger.far === undefined || this.view.distance >= trigger.far)
-        }
-        if (condition === null) continue
-        if (condition && !brick.shown) this.schedule(brick, brick.config.delay)
-        else if (!condition) {
-          this.scheduled.delete(brick.id)
-          if (brick.shown) brick.hide()
-        }
+    for (const [id, s] of this.scheduled) {
+      if (!this.posterActive(s.brick.posterId)) continue
+      s.remaining -= dt
+      if (s.remaining <= 0) {
+        this.scheduled.delete(id)
+        s.brick.show()
       }
     }
 
     for (const brick of this.bricks) {
-      if (!brick.holder.visible) continue
+      if (this.isScreenUi(brick) || !brick.posterId || !this.tracked.has(brick.posterId)) continue
+      const {trigger} = brick.config
+      let condition: boolean | null = null
+      if (trigger.type === 'tilt') {
+        condition = this.view.tilt >= trigger.min && this.view.tilt <= trigger.max
+      } else if (trigger.type === 'distance') {
+        condition = (trigger.near === undefined || this.view.distance <= trigger.near) &&
+          (trigger.far === undefined || this.view.distance >= trigger.far)
+      } else if (trigger.type === 'collected') {
+        const needed = trigger.count === 'all' ? this.collection.total : trigger.count
+        condition = this.collection.count >= needed
+      }
+      if (condition === null) continue
+      if (condition && !brick.shown) this.schedule(brick, brick.config.delay)
+      else if (!condition) {
+        this.scheduled.delete(brick.id)
+        if (brick.shown) brick.hide()
+      }
+    }
+
+    for (const brick of this.bricks) {
+      if (!brick.holder.visible && !this.isScreenUi(brick)) continue
       try {
         brick.update(this.elapsed, dt, this.view)
       } catch (err) {
@@ -219,19 +302,23 @@ export class Runtime {
       }
     }
 
-    if (this.active) this.callBehaviors('onUpdate', this.elapsed / 1000, dt / 1000)
-    void timeMs
+    if (this.anyActive) this.callBehaviors('onUpdate', this.elapsed / 1000, dt / 1000)
   }
 
   private camWorld = new THREE.Vector3()
   private camLocal = new THREE.Vector3()
 
+  private get currentPoster(): Poster {
+    return this.posters.get(this.current ?? this.ids[0]) ?? [...this.posters.values()][0]
+  }
+
   private updateView(): void {
-    const {camera, posterRoot} = this.stage
-    camera.getWorldPosition(this.camWorld)
-    posterRoot.updateWorldMatrix(true, false)
+    const poster = this.currentPoster
+    if (!poster) return
+    this.stage.camera.getWorldPosition(this.camWorld)
+    poster.root.updateWorldMatrix(true, false)
     this.camLocal.copy(this.camWorld)
-    posterRoot.worldToLocal(this.camLocal)
+    poster.root.worldToLocal(this.camLocal)
     const v = this.camLocal
     const len = v.length() || 1
     this.view.distance = len
@@ -244,7 +331,7 @@ export class Runtime {
   // Taps
 
   private onTap(clientX: number, clientY: number): void {
-    if (!this.active) return
+    if (!this.anyActive) return
     const rect = this.stage.canvas.getBoundingClientRect()
     const ndc = new THREE.Vector2(
       ((clientX - rect.left) / rect.width) * 2 - 1,
@@ -262,12 +349,13 @@ export class Runtime {
         hitBrick = brick
       }
     }
-    const planeHit = this.raycaster.intersectObject(this.tapPlane, false)[0]
+    const poster = this.currentPoster
+    const planeHit = poster ? this.raycaster.intersectObject(poster.tapPlane, false)[0] : undefined
     let x: number | null = null
     let y: number | null = null
     if (planeHit) {
-      const local = this.stage.posterRoot.worldToLocal(planeHit.point.clone())
-      const p = fromLocal(this.poster.ratio, local)
+      const local = poster.root.worldToLocal(planeHit.point.clone())
+      const p = fromLocal(poster.ratio, local)
       x = p.x
       y = p.y
     }
@@ -278,7 +366,7 @@ export class Runtime {
   handleTap(hit: TapHit): void {
     for (const brick of this.bricks) {
       const {trigger, delay} = brick.config
-      if (trigger.type !== 'tap') continue
+      if (trigger.type !== 'tap' || !this.posterActive(brick.posterId)) continue
       const target = trigger.on === 'self' ? brick.id : trigger.on
       if (target && target !== hit.brick) continue
       if (brick.shown) {
@@ -311,15 +399,20 @@ export class Runtime {
   private createCtx(): Ctx {
     const handles = new Map(this.bricks.map((b) => [b.id, this.handle(b)]))
     const runtime = this
-    const ratio = this.poster.ratio
+    const collection = this.collection
     return Object.freeze({
       THREE,
-      poster: this.stage.posterRoot,
+      get poster() {
+        return runtime.currentPoster.root
+      },
+      get target() {
+        return runtime.current
+      },
       mode: this.stage.mode,
       view: this.view,
       device: this.device,
       get tracked() {
-        return runtime.tracked
+        return runtime.tracked.size > 0
       },
       bricks: Object.freeze({
         get: (id: string) => handles.get(id),
@@ -327,8 +420,21 @@ export class Runtime {
         show: (id: string) => handles.get(id)?.show(),
         hide: (id: string) => handles.get(id)?.hide(),
       }),
-      toLocal: (x: number, y: number, z = 0) => toLocal(ratio, x, y, z),
-      fromLocal: (v: THREE.Vector3) => fromLocal(ratio, v),
+      collection: Object.freeze({
+        has: (id: string) => collection.has(id),
+        list: () => collection.list(),
+        get count() {
+          return collection.count
+        },
+        get total() {
+          return collection.total
+        },
+        get complete() {
+          return collection.complete
+        },
+      }),
+      toLocal: (x: number, y: number, z = 0) => toLocal(runtime.currentPoster.ratio, x, y, z),
+      fromLocal: (v: THREE.Vector3) => fromLocal(runtime.currentPoster.ratio, v),
       tween: (options) => this.tweens.add(options),
       sound: Object.freeze({
         get enabled() {
@@ -348,7 +454,7 @@ export class Runtime {
         const head = await fetch(experienceUrl(file), {method: 'HEAD', cache: 'no-cache'}).catch(() => null)
         const type = head?.headers.get('content-type') ?? ''
         if (!head?.ok || type.includes('text/html')) {
-          report('error', `Behavior « ${name} » : le fichier ${this.behaviorsBase ? "" : "experience/"}${file} est introuvable.`)
+          report('error', `Behavior « ${name} » : le fichier ${this.behaviorsBase ? '' : 'experience/'}${file} est introuvable.`)
           continue
         }
         const mod = await import(/* @vite-ignore */ experienceUrl(file))

@@ -54,7 +54,11 @@ const triggerObject = z.discriminatedUnion('type', [
   }).refine((t) => t.near !== undefined || t.far !== undefined, {
     error: 'un déclencheur "distance" a besoin de "near" (plus proche que) ou "far" (plus loin que)',
   }),
-], {error: 'type de déclencheur inconnu : utilise "found", "tap", "delay", "tilt" ou "distance"'})
+  z.object({
+    type: z.literal('collected'),
+    count: z.union([z.literal('all'), z.number().int().min(1)]).default('all'),
+  }),
+], {error: 'type de déclencheur inconnu : utilise "found", "tap", "delay", "tilt", "distance" ou "collected"'})
 
 const trigger = z
   .union([
@@ -68,6 +72,11 @@ const base = {
   id: z
     .string({error: 'chaque brique a besoin d\'un "id" (un nom court, ex. "typons")'})
     .regex(/^[a-zA-Z0-9_-]+$/, {error: 'l\'id ne doit contenir que des lettres, chiffres, - ou _'}),
+  // Poster the brick lives on: a "targets" id, or "*" for whichever poster is being looked at.
+  target: z
+    .string()
+    .regex(/^(\*|[a-zA-Z0-9_-]+)$/, {error: 'doit être l\'id d\'une affiche de "targets", ou "*" (n\'importe quelle affiche)'})
+    .optional(),
   trigger,
   appear: z.enum(['fade', 'pop', 'rise', 'none']).default('fade'),
   duration: z.number().min(0).max(10000).default(600),
@@ -178,18 +187,52 @@ export const uiBrick = z.object({
   soundButton: z.boolean().default(false),
 })
 
+const targetId = z
+  .string()
+  .regex(/^[a-zA-Z0-9_-]+$/, {error: 'id d\'affiche invalide : lettres, chiffres, - ou _'})
+
+// Screen-space grid that fills up as posters are found (remembered on the phone).
+// Always visible once the experience has started: its trigger is ignored.
+export const collectionBrick = z.object({
+  ...base,
+  type: z.literal('collection'),
+  columns: z.number().int().min(1).max(6).default(3),
+  pieces: z
+    .array(z.object({
+      target: targetId,
+      src: assetPath.optional(),
+    }))
+    .min(1, {error: 'il faut au moins une pièce dans "pieces"'})
+    .max(16),
+  position: z.enum(['bottom', 'top']).default('bottom'),
+  size: z.number().min(0.15).max(0.9).default(0.4),
+  hint: z.string().max(80).optional(),
+  reveal: z
+    .object({
+      title: z.string().max(80).default('Bravo !'),
+      image: assetPath.optional(),
+      text: z.string().max(800).optional(),
+      link: z.url({error: 'le lien doit être une adresse complète, ex. "https://..."'}).optional(),
+    })
+    .optional(),
+})
+
 export const brickSchemas = {
   layers: layersBrick,
   video: videoBrick,
   model: modelBrick,
   particles: particlesBrick,
   ui: uiBrick,
+  collection: collectionBrick,
 } as const
+
+// Bricks that are screen UI and do not count in the "3 bricks per poster" advice.
+export const UI_BRICKS = new Set(['ui', 'collection'])
 
 export type BrickType = keyof typeof brickSchemas
 export const BRICK_TYPES = Object.keys(brickSchemas) as BrickType[]
 
-export const brick = z.discriminatedUnion('type', [layersBrick, videoBrick, modelBrick, particlesBrick, uiBrick])
+export const brick = z.discriminatedUnion('type', [layersBrick, videoBrick, modelBrick, particlesBrick, uiBrick, collectionBrick])
 
 // ---------------------------------------------------------------------------
 // Top level
@@ -199,6 +242,15 @@ const topLevelShape = {
   title: z.string().max(120).default('Affiche augmentée'),
   author: z.string().max(120).default(''),
   target: z.string().default('target.json'),
+  // Several posters: replaces "target". Each brick then picks its poster with "target".
+  targets: z
+    .array(z.object({
+      id: targetId,
+      file: z.string().regex(/^[^/\\]+\.json$/, {error: 'nom du fichier de cible dans experience/target/, ex. "piece-1.json"'}),
+    }))
+    .min(1)
+    .max(16, {error: '16 affiches maximum'})
+    .optional(),
   onLost: z.enum(['hide', 'freeze']).default('hide'),
   replayOnFound: z.boolean().default(true),
   theme: z
@@ -228,6 +280,15 @@ export type VideoBrick = z.output<typeof videoBrick>
 export type ModelBrick = z.output<typeof modelBrick>
 export type ParticlesBrick = z.output<typeof particlesBrick>
 export type UiBrick = z.output<typeof uiBrick>
+export type CollectionBrick = z.output<typeof collectionBrick>
+
+// Poster ids of an experience: the "targets" ids, or a single implicit "main" poster.
+export const SINGLE_TARGET_ID = 'main'
+export const targetIds = (exp: {targets?: {id: string}[]}): string[] =>
+  exp.targets?.map((t) => t.id) ?? [SINGLE_TARGET_ID]
+
+// Poster a brick is attached to: its "target", or the first poster.
+export const brickTarget = (b: {target?: string}, ids: string[]): string => b.target ?? ids[0]
 export type Trigger = Brick['trigger']
 
 // ---------------------------------------------------------------------------
@@ -329,12 +390,46 @@ export const validateExperience = (data: unknown): ValidationResult => {
     bricks.push(result.data as Brick)
   })
 
-  const counted = bricks.filter((b) => b.type !== 'ui').length
-  if (counted > MAX_BRICKS) {
-    issues.push({
-      level: 'warning',
-      message: `${counted} briques (hors "ui") : on conseille ${MAX_BRICKS} maximum par affiche, pour la lisibilité et les performances sur téléphone.`,
-    })
+  // Posters: unique ids, and every brick / collection piece must point at an existing one.
+  const ids = targetIds(topData)
+  if (topData.targets && new Set(ids).size !== ids.length) {
+    issues.push({level: 'error', message: 'experience.json › targets : deux affiches ont le même "id".'})
+  }
+  const known = (id: string) => ids.includes(id)
+  const multi = !!topData.targets
+  const kept = bricks.filter((b) => {
+    if (b.target && b.target !== '*' && !known(b.target)) {
+      issues.push({
+        level: 'error',
+        message: multi
+          ? `La brique « ${b.id} » : l'affiche « ${b.target} » n'existe pas dans "targets" (${ids.map((i) => `"${i}"`).join(', ')}, ou "*").`
+          : `La brique « ${b.id} » : "target" ne sert que s'il y a plusieurs affiches (liste "targets"). Retire-le.`,
+      })
+      return false
+    }
+    if (b.type === 'collection') {
+      const unknown = b.pieces.filter((p) => !known(p.target))
+      if (unknown.length) {
+        issues.push({
+          level: 'error',
+          message: `La brique « ${b.id} » : ${unknown.map((p) => `« ${p.target} »`).join(', ')} n'existe pas dans "targets".`,
+        })
+        return false
+      }
+    }
+    return true
+  })
+  bricks.length = 0
+  bricks.push(...kept)
+
+  for (const id of ids) {
+    const counted = bricks.filter((b) => !UI_BRICKS.has(b.type) && (b.target === '*' || brickTarget(b, ids) === id)).length
+    if (counted > MAX_BRICKS) {
+      issues.push({
+        level: 'warning',
+        message: `${counted} briques${multi ? ` sur l'affiche « ${id} »` : ''} (hors "ui" et "collection") : on conseille ${MAX_BRICKS} maximum par affiche, pour la lisibilité et les performances sur téléphone.`,
+      })
+    }
   }
 
   // Tap triggers pointing at an unknown brick.

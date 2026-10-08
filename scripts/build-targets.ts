@@ -5,12 +5,15 @@
 //   npm run targets -- posters --out dossier
 //   npm run targets -- affiche.png --into experience/target    write straight into a project
 //   --crop top,left,width                   custom 3:4 crop (pixels of the upright poster)
+//   npm run targets -- posters/groupe --group [--into experience/target]
+//                                           several posters of ONE project (multi-poster experience)
 //
 // @8thwall/image-target-cli is interactive only (readline prompts, no flags). Its package has no
 // "exports" map, so we call its internals directly: getDefaultCrop() (src/crop.js) and applyCrop()
 // (src/apply.js), exactly as its interactive flow does for a flat target.
 // Each output folder contains the CLI files plus:
 //   target.json        the CLI's <nom>.json, renamed so the runtime always finds it
+//                      (with --group: kept as <nom>.json, one per poster, all in one folder)
 //   <nom>_poster.jpg   the upright poster for the camera-less preview
 
 import sharp from 'sharp'
@@ -23,6 +26,7 @@ const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 const MIN_W = 480
 const MIN_H = 640
 const POSTER_MAX = 2048
+const built: string[] = []
 
 const args = process.argv.slice(2)
 const flag = (name: string) => {
@@ -35,6 +39,9 @@ const flag = (name: string) => {
 const outDir = resolve(flag('--out') ?? 'targets-out')
 const intoDir = flag('--into')
 const cropArg = flag('--crop')
+const groupIndex = args.indexOf('--group')
+const group = groupIndex !== -1
+if (group) args.splice(groupIndex, 1)
 const input = resolve(args[0] ?? 'posters')
 
 // "Prénom Nom.png" -> "prenom-nom"
@@ -54,7 +61,7 @@ const collect = (): string[] => {
 
 const buildOne = async (file: string) => {
   const name = slug(basename(file, extname(file)))
-  const folder = intoDir ? resolve(intoDir) : join(outDir, name)
+  const folder = intoDir ? resolve(intoDir) : join(outDir, group ? slug(basename(input)) : name)
   // JPEG (white background) keeps the generated files light; EXIF orientation applied.
   const jpeg = await sharp(file).rotate().flatten({background: '#ffffff'}).jpeg({quality: 90}).toBuffer()
   const image = sharp(jpeg)
@@ -84,10 +91,10 @@ const buildOne = async (file: string) => {
   }
 
   mkdirSync(folder, {recursive: true})
+  // Only replace this poster's files (a folder may hold several posters' targets).
   for (const f of readdirSync(folder)) {
-    if (/_(original|cropped|thumbnail|luminance|poster)\.(jpg|png|webp)$/.test(f) || f === 'target.json' || f === `${name}.json`) {
-      rmSync(join(folder, f))
-    }
+    const own = f.startsWith(`${name}_`) && /_(original|cropped|thumbnail|luminance|poster)\.(jpg|png|webp)$/.test(f)
+    if (own || f === `${name}.json` || (!group && f === 'target.json')) rmSync(join(folder, f))
   }
   const {dataPath} = await applyCrop(image, {type: 'PLANAR', geometry}, folder, name, true)
 
@@ -100,11 +107,18 @@ const buildOne = async (file: string) => {
 
   const data = JSON.parse(readFileSync(dataPath, 'utf8'))
   data.resources.posterImage = posterFile
-  writeFileSync(join(folder, 'target.json'), `${JSON.stringify(data, null, 2)}\n`)
-  rmSync(dataPath)
-  // The full-size original is not needed at runtime (the preview uses _poster.jpg): drop it.
-  const original = join(folder, data.resources.originalImage)
-  if (existsSync(original)) rmSync(original)
+  if (group) {
+    writeFileSync(dataPath, `${JSON.stringify(data, null, 2)}\n`)
+  } else {
+    writeFileSync(join(folder, 'target.json'), `${JSON.stringify(data, null, 2)}\n`)
+    rmSync(dataPath)
+  }
+  // Not needed at runtime (the engine uses _luminance, the preview _poster): drop them.
+  for (const key of ['originalImage', 'croppedImage'] as const) {
+    const file = join(folder, data.resources[key])
+    if (existsSync(file)) rmSync(file)
+  }
+  built.push(name)
 
   const lost = Math.round((1 - (geometry.width * geometry.height) / (width * height)) * 100)
   console.log(`✔ ${name} → ${folder}  (zone trackée : ${100 - lost} % de l'affiche${lost ? `, ${lost} % hors cible` : ''})`)
@@ -116,7 +130,7 @@ const main = async () => {
     console.error('✖ Aucune image PNG/JPG trouvée.')
     process.exit(1)
   }
-  if (intoDir && files.length > 1) {
+  if (intoDir && files.length > 1 && !group) {
     console.error('✖ --into ne marche qu\'avec une seule affiche.')
     process.exit(1)
   }
@@ -127,7 +141,13 @@ const main = async () => {
       console.error(`✖ ${basename(file)} : ${(err as Error).message}`)
     }
   }
-  if (!intoDir) console.log(`\nCopie le contenu de targets-out/<nom>/ dans experience/target/ du projet de l'étudiant.`)
+  if (group && built.length) {
+    console.log('\nÀ coller dans experience.json :\n')
+    console.log(`  "targets": [\n${built.map((n) => `    { "id": "${n}", "file": "${n}.json" }`).join(',\n')}\n  ],`)
+    if (!intoDir) console.log(`\nCopie le contenu de targets-out/${slug(basename(input))}/ dans experience/target/ du projet du groupe.`)
+  } else if (!intoDir) {
+    console.log(`\nCopie le contenu de targets-out/<nom>/ dans experience/target/ du projet de l'étudiant.`)
+  }
 }
 
 void main()

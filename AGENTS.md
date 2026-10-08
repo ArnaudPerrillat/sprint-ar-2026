@@ -31,13 +31,14 @@ Si l'application affiche « Le dossier core/ a été modifié », c'est qu'un fi
 - Positions : `x` et `y` vont de 0 à 1 depuis le **coin haut-gauche de l'affiche** (comme dans un logiciel de mise en page) ; `z` est le décollement vers le spectateur, en fraction de la largeur de l'affiche (0.1 = 10 % de la largeur). Les tailles (`width`, `size`) sont aussi en largeur d'affiche.
 - **3 briques maximum** par affiche (la brique `ui` ne compte pas). Si l'étudiant·e en veut plus, aide-le/la à choisir.
 - Chaque brique a un `id` unique, court, sans espace ni accent (ex. `"typons"`, `"video-chat"`).
+- **Plusieurs affiches** (projet de groupe, puzzle, série) : la liste `"targets"` est fournie par l'enseignant — ne l'invente pas et ne change pas les noms de fichiers. Chaque brique choisit son affiche avec `"target"` (un id de `targets`, ou `"*"` pour l'affiche visée) ; la limite de 3 briques est **par affiche**. Pour une grille de pièces à collectionner, utilise la brique `collection` ; pour un final quand tout est trouvé, le déclencheur `{ "type": "collected" }`. Modèle : `examples/05-puzzle`.
 
 ## 4. Préférer les briques existantes au code
 
 Ordre de préférence :
 
-1. une brique (`layers`, `video`, `model`, `particles`, `ui`) avec ses options ;
-2. une combinaison de briques et de déclencheurs (`found`, `tap`, `delay`, `tilt`, `distance`) ;
+1. une brique (`layers`, `video`, `model`, `particles`, `ui`, `collection`) avec ses options ;
+2. une combinaison de briques et de déclencheurs (`found`, `tap`, `delay`, `tilt`, `distance`, `collected`) ;
 3. seulement si c'est impossible autrement : un behavior dans `experience/behaviors/`.
 
 Un behavior respecte **exactement** cette forme, sans `import` :
@@ -52,7 +53,7 @@ export default {
 }
 ```
 
-Il n'utilise que ce que fournit `ctx` (décrit dans `core/behaviors.d.ts`) : `ctx.poster`, `ctx.bricks`, `ctx.THREE`, `ctx.view`, `ctx.device`, `ctx.tween`, `ctx.sound`, `ctx.state`, `ctx.toLocal`, `ctx.log`. Pas d'accès au DOM, pas de `fetch`, pas de nouvelle scène ni de nouveau renderer. Il faut l'ajouter dans `"behaviors": ["nom-du-fichier"]` (sans `.js`).
+Il n'utilise que ce que fournit `ctx` (décrit dans `core/behaviors.d.ts`) : `ctx.poster`, `ctx.target`, `ctx.collection`, `ctx.bricks`, `ctx.THREE`, `ctx.view`, `ctx.device`, `ctx.tween`, `ctx.sound`, `ctx.state`, `ctx.toLocal`, `ctx.log`. Pas d'accès au DOM, pas de `fetch`, pas de nouvelle scène ni de nouveau renderer. Il faut l'ajouter dans `"behaviors": ["nom-du-fichier"]` (sans `.js`).
 
 ## 5. Budget et formats (le site doit rester fluide sur téléphone)
 
@@ -68,4 +69,4 @@ Il n'utilise que ce que fournit `ctx` (décrit dans `core/behaviors.d.ts`) : `ct
 - Propose une traduction en briques + déclencheurs, **fais valider**, puis écris `experience.json`.
 - Après chaque modification, dis comment vérifier dans l'aperçu : boutons « ▶ Détection », « ■ Perte », « Tap », et en tournant autour de l'affiche à la souris.
 - Si l'aperçu affiche un panneau d'erreurs, lis le message (il est en français) et corrige `experience.json` en conséquence.
-- Pour t'inspirer, lis les exemples (sans les modifier) : `examples/01-typons`, `examples/02-video`, `examples/03-modele`, `examples/04-behavior`.
+- Pour t'inspirer, lis les exemples (sans les modifier) : `examples/01-typons`, `examples/02-video`, `examples/03-modele`, `examples/04-behavior`, `examples/05-puzzle`.

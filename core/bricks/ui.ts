@@ -12,7 +12,7 @@ const openLink = (url: string) => window.open(url, '_blank', 'noopener')
 export class UiBrickImpl extends BrickBase<UiBrick> {
   private layer = document.createElement('div')
   private cta: HTMLButtonElement | null = null
-  private spots: {el: HTMLButtonElement; local: THREE.Vector3}[] = []
+  private spots: {el: HTMLButtonElement; spot: {x: number; y: number; z: number}}[] = []
   private sheet: HTMLElement | null = null
   private tmp = new THREE.Vector3()
 
@@ -35,7 +35,7 @@ export class UiBrickImpl extends BrickBase<UiBrick> {
         else if (spot.link) openLink(spot.link)
       })
       this.layer.appendChild(el)
-      this.spots.push({el, local: toLocal(this.env.ratio, spot.x, spot.y, spot.z)})
+      this.spots.push({el, spot})
     })
 
     if (cta) {
@@ -110,8 +110,8 @@ export class UiBrickImpl extends BrickBase<UiBrick> {
     const rect = canvas.getBoundingClientRect()
     const root = this.holder.parent
     if (!root) return
-    for (const {el, local} of this.spots) {
-      this.tmp.copy(local)
+    for (const {el, spot} of this.spots) {
+      this.tmp.copy(toLocal(this.ratio, spot.x, spot.y, spot.z))
       root.localToWorld(this.tmp)
       this.tmp.project(this.env.camera)
       const visible = this.tmp.z > -1 && this.tmp.z < 1 && Math.abs(this.tmp.x) < 1.1 && Math.abs(this.tmp.y) < 1.1

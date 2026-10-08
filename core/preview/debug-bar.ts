@@ -11,6 +11,7 @@ const EXAMPLES: [string, string][] = [
   ['02-video', 'Exemple 2 · vidéo'],
   ['03-modele', 'Exemple 3 · modèle 3D'],
   ['04-behavior', 'Exemple 4 · behavior'],
+  ['05-puzzle', 'Exemple 5 · puzzle (4 affiches)'],
 ]
 
 const button = (label: string, title: string, onClick: () => void): HTMLButtonElement => {
@@ -83,8 +84,28 @@ export const mountDebugBar = (stage: PreviewStage, runtime: Runtime): void => {
     location.href = urlWithParams({exemple: examples.value || null})
   })
 
+  // Several posters: pick the one "in front of the camera" (switching = lost + found).
+  const posterTools: HTMLElement[] = []
+  if (stage.ids.length > 1) {
+    const posters = document.createElement('select')
+    posters.title = 'Affiche visée par le téléphone simulé'
+    posters.setAttribute('aria-label', 'Affiche visée')
+    for (const id of stage.ids) {
+      const option = document.createElement('option')
+      option.value = id
+      option.textContent = `▣ ${id}`
+      posters.appendChild(option)
+    }
+    posters.addEventListener('change', () => stage.switchTo(posters.value))
+    posterTools.push(posters)
+  }
+  if (stage.ids.length > 1 || runtime.experience.bricks.some((b) => b.type === 'collection')) {
+    posterTools.push(button('↺ Collection', 'Vider la collection mémorisée (comme un nouveau visiteur)', () => runtime.collection.reset()))
+  }
+
   bar.append(
     examples,
+    ...posterTools,
     status,
     button('▶ Détection', 'Rejoue l\'expérience comme si l\'affiche venait d\'être trouvée', () => stage.simulateFound()),
     button('■ Perte', 'Comme si la caméra ne voyait plus l\'affiche', () => stage.simulateLost()),
@@ -96,6 +117,8 @@ export const mountDebugBar = (stage: PreviewStage, runtime: Runtime): void => {
     arLink,
   )
   document.body.appendChild(bar)
+  // Lets the CTA / collection grid sit above the bar, whatever its height (it may wrap).
+  new ResizeObserver(() => document.body.style.setProperty('--ra-debug-h', `${bar.offsetHeight}px`)).observe(bar)
 
   let acc = 0
   let last = performance.now()

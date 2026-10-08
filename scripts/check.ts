@@ -81,6 +81,11 @@ const assetsOf = (b: Brick): string[] => {
     case 'video':
     case 'model':
       return [b.src]
+    case 'collection':
+      return [
+        ...b.pieces.flatMap((p) => (p.src ? [p.src] : [])),
+        ...(b.reveal?.image ? [b.reveal.image] : []),
+      ]
     default:
       return []
   }
@@ -154,19 +159,29 @@ const main = async () => {
     }
   }
 
-  // 4. Target
-  const targetJson = join(expDir, 'target', experience.target)
-  if (!existsSync(targetJson)) {
-    error(`cible : experience/target/${experience.target} n'existe pas (demande le dossier de cible à ton enseignant)`)
-  } else {
+  // 4. Targets (one, or one per poster with "targets")
+  const engineNames = new Map<string, string>()
+  for (const {id, file} of experience.targets ?? [{id: 'main', file: experience.target}]) {
+    const label = experience.targets ? `cible « ${id} »` : 'cible'
+    const targetJson = join(expDir, 'target', file)
+    if (!existsSync(targetJson)) {
+      error(`${label} : experience/target/${file} n'existe pas (demande le dossier de cible à ton enseignant)`)
+      continue
+    }
     try {
       const target = JSON.parse(readFileSync(targetJson, 'utf8'))
       const lum = target.resources?.luminanceImage
-      if (!lum || !existsSync(join(expDir, 'target', lum))) error(`cible : l'image ${lum ?? '(luminance)'} manque dans experience/target/`)
-      else ok(`cible « ${target.name} »`)
+      if (!lum || !existsSync(join(expDir, 'target', lum))) error(`${label} : l'image ${lum ?? '(luminance)'} manque dans experience/target/`)
+      else ok(`${label} : ${file} (« ${target.name} »)`)
+      const other = engineNames.get(target.name)
+      if (other) error(`les affiches « ${other} » et « ${id} » ont la même cible « ${target.name} »`)
+      engineNames.set(target.name, id)
     } catch {
-      error(`cible : experience/target/${experience.target} n'est pas un JSON valide`)
+      error(`${label} : experience/target/${file} n'est pas un JSON valide`)
     }
+  }
+  if ((experience.targets?.length ?? 1) > 8) {
+    warn(`${experience.targets!.length} affiches : au-delà de 8, le démarrage devient lent sur téléphone`)
   }
 
   // 5. Weight budget (whole experience/ folder, it is all published)

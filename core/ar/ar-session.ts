@@ -1,10 +1,11 @@
 // AR stage: 8th Wall camera pipeline + three.js scene + image target tracking.
 // Mirrors the official threejs example (8thwall/threejs-world-effects-example) with world tracking
-// disabled, as in the official image targets example.
+// disabled, as in the official image targets example. Several posters can be tracked at once
+// (the engine supports up to 32 image targets): one anchored group per poster.
 
 import * as THREE from 'three'
 import type {Stage, StageEvents} from '../stage'
-import type {LoadedTarget} from './target'
+import type {PosterTarget} from './target'
 import {createAnchorDebug, fitPosterToTarget} from './poster-anchor'
 import {loadEngine, type XR8Api} from './engine-loader'
 import {fullWindowCanvasModule} from './full-window-canvas'
@@ -28,20 +29,28 @@ export class ArStage implements Stage {
   scene!: THREE.Scene
   camera!: THREE.Camera
   renderer!: THREE.WebGLRenderer
-  readonly posterRoot = new THREE.Group()
-  private readonly targetGroup = new THREE.Group()
+  readonly posterRoots = new Map<string, THREE.Group>()
+  // Engine target name -> {poster id, group driven by the tracked pose}.
+  private readonly anchors = new Map<string, {id: string; group: THREE.Group}>()
   private last = performance.now()
 
   constructor(
     readonly canvas: HTMLCanvasElement,
-    private readonly target: LoadedTarget,
+    private readonly targets: PosterTarget[],
     private readonly onStatus: (status: ArStatus) => void,
   ) {
-    this.targetGroup.name = 'image-target'
-    this.targetGroup.visible = false
-    this.targetGroup.add(this.posterRoot)
-    fitPosterToTarget(this.posterRoot, target.poster)
-    if (query.debug === 'anchor') this.posterRoot.add(createAnchorDebug(target.poster))
+    for (const target of targets) {
+      const group = new THREE.Group()
+      group.name = `image-target:${target.id}`
+      group.visible = false
+      const posterRoot = new THREE.Group()
+      posterRoot.name = `poster:${target.id}`
+      group.add(posterRoot)
+      fitPosterToTarget(posterRoot, target.poster)
+      if (query.debug === 'anchor') posterRoot.add(createAnchorDebug(target.poster))
+      this.posterRoots.set(target.id, posterRoot)
+      if (target.data) this.anchors.set(target.data.name, {id: target.id, group})
+    }
   }
 
   async start(events: StageEvents): Promise<void> {
@@ -62,11 +71,10 @@ export class ArStage implements Stage {
     // XR8.Threejs.pipelineModule() requires a global THREE.
     window.THREE = THREE
 
-    const targetName = this.target.data!.name
-    const applyPose = (detail: ImageDetail) => {
-      this.targetGroup.position.set(detail.position.x, detail.position.y, detail.position.z)
-      this.targetGroup.quaternion.set(detail.rotation.x, detail.rotation.y, detail.rotation.z, detail.rotation.w)
-      this.targetGroup.scale.setScalar(detail.scale)
+    const applyPose = (group: THREE.Group, detail: ImageDetail) => {
+      group.position.set(detail.position.x, detail.position.y, detail.position.z)
+      group.quaternion.set(detail.rotation.x, detail.rotation.y, detail.rotation.z, detail.rotation.w)
+      group.scale.setScalar(detail.scale)
     }
 
     let resolveStart!: () => void
@@ -84,7 +92,7 @@ export class ArStage implements Stage {
         const dir = new THREE.DirectionalLight(0xffffff, 1.2)
         dir.position.set(1, 2, 3)
         scene.add(dir)
-        scene.add(this.targetGroup)
+        for (const {group} of this.anchors.values()) scene.add(group)
         camera.position.set(0, 0, 0)
         XR8.XrController.updateCameraProjectionMatrix({origin: camera.position, facing: camera.quaternion})
         this.canvas.addEventListener('touchmove', (e) => e.preventDefault(), {passive: false})
@@ -110,22 +118,25 @@ export class ArStage implements Stage {
         {
           event: 'reality.imagefound',
           process: ({detail}: {detail: ImageDetail}) => {
-            if (detail.name !== targetName) return
-            applyPose(detail)
-            this.targetGroup.visible = true
-            events.found()
+            const anchor = this.anchors.get(detail.name)
+            if (!anchor) return
+            applyPose(anchor.group, detail)
+            anchor.group.visible = true
+            events.found(anchor.id)
           },
         },
         {
           event: 'reality.imageupdated',
           process: ({detail}: {detail: ImageDetail}) => {
-            if (detail.name === targetName) applyPose(detail)
+            const anchor = this.anchors.get(detail.name)
+            if (anchor) applyPose(anchor.group, detail)
           },
         },
         {
           event: 'reality.imagelost',
           process: ({detail}: {detail: ImageDetail}) => {
-            if (detail.name === targetName) events.lost()
+            const anchor = this.anchors.get(detail.name)
+            if (anchor) events.lost(anchor.id)
           },
         },
       ],
@@ -133,7 +144,7 @@ export class ArStage implements Stage {
 
     XR8.XrController.configure({
       disableWorldTracking: true,
-      imageTargetData: [this.target.data],
+      imageTargetData: this.targets.filter((t) => t.data).map((t) => t.data),
     })
 
     XR8.addCameraPipelineModules([
