@@ -21,12 +21,14 @@ import {existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync, rea
 import {basename, extname, join, resolve} from 'node:path'
 import {applyCrop} from '@8thwall/image-target-cli/src/apply.js'
 import {getDefaultCrop} from '@8thwall/image-target-cli/src/crop.js'
+import {scoreTrackability, similarity} from './lib/trackability.ts'
 
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 const MIN_W = 480
 const MIN_H = 640
 const POSTER_MAX = 2048
 const built: string[] = []
+const luminances = new Map<string, string>()
 
 const args = process.argv.slice(2)
 const flag = (name: string) => {
@@ -119,9 +121,17 @@ const buildOne = async (file: string) => {
     if (existsSync(file)) rmSync(file)
   }
   built.push(name)
+  const luminance = join(folder, data.resources.luminanceImage)
+  luminances.set(name, luminance)
 
   const lost = Math.round((1 - (geometry.width * geometry.height) / (width * height)) * 100)
   console.log(`✔ ${name} → ${folder}  (zone trackée : ${100 - lost} % de l'affiche${lost ? `, ${lost} % hors cible` : ''})`)
+
+  // Detection speed depends mostly on the poster itself: warn before it gets printed.
+  const score = await scoreTrackability(luminance)
+  const icon = {bon: '●', moyen: '◐', faible: '○'}[score.level]
+  console.log(`    ${icon} reconnaissance : ${score.level} (${score.corners} points d'accroche, conseillé ≥ 18000)`)
+  score.advice.forEach((a) => console.log(`      ⚠ ${a}`))
 }
 
 const main = async () => {
@@ -139,6 +149,15 @@ const main = async () => {
       await buildOne(file)
     } catch (err) {
       console.error(`✖ ${basename(file)} : ${(err as Error).message}`)
+    }
+  }
+  if (group && built.length > 1) {
+    // Posters of one project that look alike get confused (and slow each other down).
+    for (let i = 0; i < built.length; i++) {
+      for (let j = i + 1; j < built.length; j++) {
+        const sim = await similarity(luminances.get(built[i])!, luminances.get(built[j])!)
+        if (sim > 0.5) console.log(`  ⚠ « ${built[i]} » et « ${built[j]} » se ressemblent trop (${Math.round(sim * 100)} %) : différencie-les davantage`)
+      }
     }
   }
   if (group && built.length) {

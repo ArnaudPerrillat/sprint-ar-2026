@@ -251,6 +251,8 @@ Un même site peut reconnaître **plusieurs affiches** (16 maximum, 8 conseillé
 { "id": "final", "type": "model", "src": "assets/final.glb", "target": "*", "trigger": { "type": "collected" } }
 ```
 
+> **Chaque affiche doit être riche à elle seule** : beaucoup de détails nets et variés (texte, contours, formes différentes), répartis partout, et pas un seul petit motif répété. Les grandes formes partagées entre les pièces d'un puzzle doivent rester minoritaires. Sinon la reconnaissance devient très lente. `npm run targets` donne un score pour chaque affiche.
+
 > La collection est enregistrée **dans le navigateur du téléphone** : un autre téléphone, un autre navigateur ou la navigation privée repartent de zéro.
 
 ---

@@ -164,15 +164,47 @@ const makePuzzle = async () => {
     const y0 = qy * H
     const clip = `clip-path="url(#q${i})"`
     s += `<clipPath id="q${i}"><rect x="${x0}" y="${y0}" width="${W}" height="${H}"/></clipPath>`
+    // Dense, varied, high-contrast details: many different shapes (no single repeated motif),
+    // mostly dark inks, so each piece has plenty of distinctive corners for the tracker.
+    // (A first version with one sparse motif per piece was detected very slowly.)
     let pattern = ''
-    for (let k = 0; k < 260; k++) {
-      const x = x0 + r(40, W - 40)
-      const y = y0 + r(40, H - 40)
-      const size = r(10, 34)
-      if (i === 0) pattern += `<circle cx="${x}" cy="${y}" r="${size / 2}" fill="${P}"/>`
-      else if (i === 1) pattern += `<rect x="${x}" y="${y}" width="${size}" height="${size}" fill="${B}" transform="rotate(${r(0, 90)} ${x} ${y})"/>`
-      else if (i === 2) pattern += `<path d="M${x - size} ${y} H${x + size} M${x} ${y - size} V${y + size}" stroke="${K}" stroke-width="7"/>`
-      else pattern += `<polygon points="${x},${y - size} ${x + size},${y + size} ${x - size},${y + size}" fill="${P}"/>`
+    const inks = [K, K, B, P]
+    for (let k = 0; k < 340; k++) {
+      const x = x0 + r(30, W - 30)
+      const y = y0 + r(30, H - 30)
+      const size = r(12, 64)
+      const rot = r(0, 360)
+      const fill = inks[Math.floor(r(0, inks.length))]
+      const t = `transform="rotate(${rot.toFixed(0)} ${x.toFixed(0)} ${y.toFixed(0)})"`
+      switch (Math.floor(r(0, 7))) {
+        case 0:
+          pattern += `<circle cx="${x}" cy="${y}" r="${size / 2}" fill="${fill}"/>`
+          break
+        case 1:
+          pattern += `<rect x="${x}" y="${y}" width="${size}" height="${size * r(0.3, 1)}" fill="${fill}" ${t}/>`
+          break
+        case 2:
+          pattern += `<polygon points="${x},${y - size} ${x + size * 0.8},${y + size * 0.6} ${x - size * 0.9},${y + size * 0.5}" fill="${fill}" ${t}/>`
+          break
+        case 3:
+          pattern += `<circle cx="${x}" cy="${y}" r="${size / 2}" fill="none" stroke="${fill}" stroke-width="${r(4, 10)}"/>`
+          break
+        case 4:
+          pattern += `<path d="M${x - size} ${y} H${x + size} M${x} ${y - size} V${y + size}" stroke="${fill}" stroke-width="${r(5, 10)}" ${t}/>`
+          break
+        case 5:
+          pattern += `<path d="M${x - size} ${y} l${size / 2} ${-size / 2} l${size / 2} ${size / 2} l${size / 2} ${-size / 2} l${size / 2} ${size / 2}" fill="none" stroke="${fill}" stroke-width="7" ${t}/>`
+          break
+        default:
+          pattern += `<text x="${x}" y="${y}" font-family="${font}" font-size="${size * 1.2}" fill="${fill}" ${t}>${'AZERTYQSDFGHJKLMWXCVBN#%?!'[Math.floor(r(0, 26))]}</text>`
+      }
+    }
+    // A block of small text, different for every piece.
+    const words = ['encre', 'trame', 'racle', 'cadre', 'typon', 'émulsion', 'repérage', 'tirage', 'aplat', 'insolation', 'séchage', 'papier']
+    for (let line = 0; line < 12; line++) {
+      let text = ''
+      while (text.length < 34) text += `${words[Math.floor(r(0, words.length))]} `
+      pattern += `<text x="${x0 + (qx ? 90 : W * 0.45)}" y="${y0 + H * (qy ? 0.12 : 0.62) + line * 30}" font-family="Arial, sans-serif" font-size="24" fill="${K}">${text.trim()}</text>`
     }
     s += `<g ${clip}>${pattern}</g>`
     // Giant numeral in the outer corner of each piece.

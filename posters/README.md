@@ -9,7 +9,9 @@ Options :
 - directement dans ce projet : `npm run targets -- posters/prenom-nom.png --into experience/target` ;
 - recadrage personnalisé (zone 3:4 suivie, en pixels) : `--crop haut,gauche,largeur`.
 
-Le script indique quelle part de l'affiche est réellement suivie (le moteur suit une zone 3:4 ; le reste peut quand même porter du contenu).
+Pour chaque affiche, le script donne un **score de reconnaissance** (● bon / ◐ moyen / ○ faible, d'après le nombre de points d'accroche nets dans l'image vue par le moteur) avec des conseils. Une affiche « faible » sera reconnue lentement : fais-la retravailler avant le tirage. En mode `--group`, il signale aussi les affiches qui se ressemblent trop.
+
+Le script indique aussi quelle part de l'affiche est réellement suivie (le moteur suit une zone 3:4 ; le reste peut quand même porter du contenu).
 Les fichiers de ce dossier ne sont pas versionnés (voir `.gitignore`).
 
 ## Projet à plusieurs affiches (puzzle, série…)
