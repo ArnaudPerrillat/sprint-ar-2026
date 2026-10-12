@@ -88,7 +88,9 @@ const serveExamples = (): Plugin => {
   }
 }
 
-// `npm run dev:http` (mode "http") serves without TLS, for desktop-only previews.
+// `npm run dev` serves plain HTTP: AI Studio's proxy (and desktop previews) expect it.
+// `npm run dev:https` (mode "https") adds a self-signed certificate, needed by a phone on the
+// same Wi-Fi (camera access requires HTTPS outside localhost).
 export default defineConfig(({mode}) => ({
   // Relative base: works on GitHub Pages project sites (https://user.github.io/repo/).
   base: './',
@@ -109,5 +111,11 @@ export default defineConfig(({mode}) => ({
       input: {main: join(root, 'index.html'), cibles: join(root, 'cibles.html')},
     },
   },
-  plugins: [mode === 'http' ? null : basicSsl(), lanQrCode(), reloadOnExperienceChange(), coreIntegrity(), serveExamples()],
+  plugins: [
+    mode === 'https' ? basicSsl() : null,
+    mode === 'https' ? lanQrCode() : null,
+    reloadOnExperienceChange(),
+    coreIntegrity(),
+    serveExamples(),
+  ],
 }))

@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:http": "vite --mode http --port 5174",
+    "dev:http": "vite --port 5174",
+    "dev:https": "vite --mode https",
     "build": "vite build",
     "preview": "vite preview --host",
     "check": "tsx scripts/check.ts",

@@ -374,8 +374,8 @@ npm install
 
 | Commande | Rôle |
 |---|---|
-| `npm run dev` | serveur HTTPS sur le réseau local + QR code dans le terminal (tester sur téléphone, même Wi-Fi ; accepter le certificat auto-signé) |
-| `npm run dev:http` | même chose sans HTTPS (aperçu sur ordinateur uniquement) |
+| `npm run dev` | aperçu en HTTP (ordinateur, et c'est ce que lance Google AI Studio) |
+| `npm run dev:https` | serveur HTTPS sur le réseau local + QR code dans le terminal (tester sur téléphone, même Wi-Fi ; accepter le certificat auto-signé) |
 | `npm run targets` | génère les cibles : `posters/prenom-nom.png` → `targets-out/prenom-nom/` ; `-- posters/groupe --group` pour un projet à plusieurs affiches (voir [posters/README.md](posters/README.md)) |
 | `npm run check` | vérifie `experience/` (schéma, fichiers, poids, vidéos, behaviors, core) ; `-- examples/02-video` pour un exemple |
 | `npm run build` | build de production dans `dist/` (c'est ce que fait la GitHub Action) |
