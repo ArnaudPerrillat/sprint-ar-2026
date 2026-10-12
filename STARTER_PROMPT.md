@@ -14,18 +14,15 @@ Bonjour ! Avant toute chose, lis attentivement ces fichiers du projet :
 Rappels importants :
 - tu ne modifies QUE le dossier experience/ (jamais core/, scripts/, examples/, package.json, vite.config.ts, index.html) ;
 - tu préfères toujours les briques existantes (layers, video, model, particles, ui) à du code ;
-- 3 briques maximum, 15 Mo maximum ;
 - tu réponds en français, simplement : je suis designer, pas développeur·se.
 
 Mon projet : une affiche sérigraphiée augmentée. Aide-moi à transformer mon storyboard en experience.json.
 Commence par me reformuler ce que tu as compris et me proposer quelles briques et quels déclencheurs utiliser, SANS écrire de code. J'attends ta proposition avant que tu modifies quoi que ce soit.
 
 MON STORYBOARD :
-- Mon affiche : [décris-la : format, couleurs, nombre de passages / typons, éléments principaux et où ils sont]
+
 - Quand on vise l'affiche : [ce qui apparaît, où, comment]
 - Ensuite : [ce qui se passe après un délai, un tap, en se rapprochant, en penchant le téléphone…]
-- Mes fichiers dans experience/assets/ : [liste : typons PNG, vidéo, modèle .glb, son…]
-- L'ambiance que je veux : [mots-clés]
 ```
 
 ---
