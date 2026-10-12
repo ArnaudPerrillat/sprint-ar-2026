@@ -11,7 +11,8 @@ export const mountSoundButton = (sound: Sound): void => {
   if (mounted) return
   const button = document.createElement('button')
   button.type = 'button'
-  button.className = 'ra-sound'
+  // Pulses until first touched, so viewers notice there is sound to turn on.
+  button.className = 'ra-sound is-hint'
   const render = (enabled: boolean) => {
     button.innerHTML = enabled ? ICON_ON : ICON_OFF
     button.setAttribute('aria-pressed', String(enabled))
@@ -23,6 +24,7 @@ export const mountSoundButton = (sound: Sound): void => {
   // Must stay synchronous inside the click: iOS only unmutes media from a user gesture.
   button.addEventListener('click', (e) => {
     e.stopPropagation()
+    button.classList.remove('is-hint')
     sound.toggle()
   })
   document.body.appendChild(button)

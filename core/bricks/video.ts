@@ -113,7 +113,7 @@ export class VideoBrickImpl extends BrickBase<VideoBrick> {
     this.mesh.renderOrder = 20
     this.content.add(this.mesh)
 
-    if (this.config.sound) {
+    if (this.config.sound === true) {
       this.unsubscribe = this.env.sound.onChange((enabled) => {
         video.muted = !enabled
       })
@@ -123,7 +123,7 @@ export class VideoBrickImpl extends BrickBase<VideoBrick> {
   protected onShow(): void {
     if (!this.video) return
     this.video.currentTime = 0
-    this.video.muted = !(this.config.sound && this.env.sound.enabled)
+    this.video.muted = !(this.config.sound === true && this.env.sound.enabled)
     this.video.play().catch(() => {
       // Autoplay refused (rare when muted): retry on the next user tap anywhere.
       const retry = () => void this.video.play().catch(() => undefined)

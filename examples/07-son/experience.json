@@ -1,0 +1,34 @@
+{
+  "$schema": "../../core/schema/experience.schema.json",
+  "//": "EXEMPLE 7 — Du son, sans code : chaque brique peut jouer un .mp3 quand elle apparaît (option \"sound\"). Le son s'arrête quand la brique disparaît. Le spectateur doit toucher le bouton haut-parleur (en haut à droite) pour l'entendre : c'est une règle des navigateurs.",
+  "title": "Affiche démo — son",
+  "author": "DNMade 2 Numérique",
+  "theme": { "color": "#ffcc00", "textColor": "#141414", "font": "Space Grotesk" },
+  "bricks": [
+    {
+      "//": "Une ambiance en boucle tant que l'affiche est visible. volume : de 0 à 1.",
+      "id": "typons",
+      "type": "layers",
+      "layers": [
+        { "src": "assets/demo/typon-1-jaune.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-2-rose.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-3-bleu.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-4-noir.png" }
+      ],
+      "spread": 0.05,
+      "sound": { "src": "assets/demo/boucle.mp3", "loop": true, "volume": 0.5 }
+    },
+    {
+      "//": "Un son court : il suffit du chemin du fichier. Il joue à chaque tap, quand les confettis apparaissent.",
+      "id": "confettis",
+      "type": "particles",
+      "preset": "confetti",
+      "color": ["#ffcc00", "#ff2d87", "#1d4bff"],
+      "density": 0.5,
+      "trigger": { "type": "tap", "toggle": true },
+      "appear": "pop",
+      "z": 0.2,
+      "sound": "assets/demo/pop.mp3"
+    }
+  ]
+}

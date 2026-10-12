@@ -78,6 +78,11 @@ export class Sound {
     return p
   }
 
+  // Loads a file ahead of time, so its first play is not delayed (and a missing file is reported early).
+  preload(path: string): void {
+    void this.load(path)
+  }
+
   // Plays a file from experience/ (e.g. "assets/pop.mp3"). Silent while sound is switched off.
   play(path: string, options: PlayOptions = {}): SoundHandle {
     let source: AudioBufferSourceNode | null = null

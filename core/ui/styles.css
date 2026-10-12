@@ -404,6 +404,16 @@ html, body {
 
 .ra-sound.is-on { background: var(--ra-color); color: var(--ra-text); }
 .ra-sound svg { width: 100%; height: 100%; display: block; }
+.ra-sound.is-hint:not(.is-on) { animation: ra-sound-hint 1.6s ease-in-out infinite; }
+
+@keyframes ra-sound-hint {
+  0%, 100% { box-shadow: 0 0 0 0 var(--ra-color); }
+  50% { box-shadow: 0 0 0 8px transparent; transform: scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ra-sound.is-hint:not(.is-on) { animation: none; outline: 3px solid var(--ra-color); }
+}
 
 .ra-debug option { color: #111; }
 

@@ -68,13 +68,31 @@ Ton expérience est une liste de **briques** (3 maximum, la brique `ui` ne compt
 | `{ "type": "distance", "far": 2 }` | tant qu'on est loin (plus de 2 largeurs) |
 | `{ "type": "collected" }` | quand toutes les affiches ont été trouvées (voir « Plusieurs affiches ») |
 
-Options communes : `"delay": 500` (attente supplémentaire en ms), `"appear": "fade" | "pop" | "rise" | "none"`, `"duration": 600` (durée de l'apparition en ms), `"opacity": 1`, `"rotation": 15` (en degrés).
+Options communes : `"delay": 500` (attente supplémentaire en ms), `"appear": "fade" | "pop" | "rise" | "none"`, `"duration": 600` (durée de l'apparition en ms), `"opacity": 1`, `"rotation": 15` (en degrés), `"sound"` (voir ci-dessous).
+
+### Du son (`sound`)
+
+N'importe quelle brique peut jouer un son **quand elle apparaît** ; il s'arrête quand elle disparaît. Exemple complet : [`examples/07-son`](examples/07-son).
+
+```json
+{ "id": "confettis", "type": "particles", "preset": "confetti", "trigger": "tap", "sound": "assets/pop.mp3" }
+```
+
+Pour une ambiance en boucle, avec un volume de 0 à 1 :
+
+```json
+"sound": { "src": "assets/ambiance.mp3", "loop": true, "volume": 0.5 }
+```
+
+- Le son joue au même moment que la brique : choisis le moment avec son `trigger` (`found` pour une ambiance, `tap` pour un bruitage…).
+- **Le son est coupé au départ** (règle des navigateurs) : un bouton haut-parleur clignote en haut à droite, le spectateur le touche pour entendre. Une ambiance déjà lancée devient alors audible.
+- Format : **`.mp3`**, court et léger (une boucle de quelques secondes suffit).
 
 ---
 
 ## Les briques, par l'exemple
 
-Les quatre exemples complets sont dans [`examples/`](examples). Pour les voir : dans l'aperçu, menu déroulant en bas à gauche (« Exemple 1 · typons »…). Pour en partir, copie le contenu de son `experience.json` dans le tien.
+Les exemples complets sont dans [`examples/`](examples). Pour les voir : dans l'aperçu, menu déroulant en bas à gauche (« Exemple 1 · typons »…). Pour en partir, copie le contenu de son `experience.json` dans le tien.
 
 ### `layers` — les typons qui se décollent
 
@@ -117,7 +135,7 @@ Un PNG transparent par couleur imprimée, **dans l'ordre d'impression**. Exporte
 }
 ```
 
-- La vidéo démarre **sans son** (règle des navigateurs). Avec `"sound": true`, un bouton haut-parleur apparaît pour l'activer.
+- La vidéo démarre **sans son** (règle des navigateurs). Avec `"sound": true`, un bouton haut-parleur apparaît pour activer **le son de la vidéo**. (Un chemin `"sound": "assets/x.mp3"` joue plutôt un fichier à part, comme pour les autres briques.)
 - **Transparence** : filme ou anime sur un **fond vert uni**, puis ajoute `chroma`. Reste du vert ? augmente `similarity`. Ton sujet disparaît ? baisse-la. `smoothness` adoucit les bords.
 - Format : `.mp4` (H.264), **720p maximum**, quelques secondes en boucle.
 
@@ -176,7 +194,7 @@ Un PNG transparent par couleur imprimée, **dans l'ordre d'impression**. Exporte
 
 - `hotspots` : pastilles accrochées à l'affiche. Avec `text`, un panneau s'ouvre ; avec seulement `link`, le lien s'ouvre.
 - `cta` : un gros bouton en bas de l'écran.
-- `soundButton` : affiche le bouton son.
+- `soundButton` : affiche le bouton son (inutile si une brique a déjà un `sound` : il apparaît tout seul).
 - Couleurs et police : section `theme` en haut de `experience.json` :
 
 ```json
@@ -285,7 +303,7 @@ Ce que contient `ctx` (détail dans `core/behaviors.d.ts`) :
 - `ctx.view` : `tilt`, `tiltX`, `tiltY` (angle de vue en degrés), `distance` ;
 - `ctx.device` : orientation du téléphone (`beta`, `gamma`) ;
 - `ctx.THREE`, `ctx.poster`, `ctx.toLocal(x, y, z)` ;
-- `ctx.tween({...})`, `ctx.sound.play('assets/pop.mp3')` ;
+- `ctx.tween({...})`, `ctx.sound.play('assets/pop.mp3', { loop, volume })` (renvoie un objet avec `stop()` ; si aucune brique n'a de `sound`, ajoute une brique `ui` avec `"soundButton": true`, sinon on n'entend rien) ;
 - `ctx.target` (affiche visée), `ctx.collection` (`has(id)`, `count`, `total`, `complete`) ;
 - `ctx.state` : mémoire libre ; `ctx.log('message')` : affiche un message.
 

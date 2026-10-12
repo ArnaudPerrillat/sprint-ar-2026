@@ -34,6 +34,16 @@ const rotation = z.union([
   }),
 ])
 
+// Sound played when the brick appears (stopped when it disappears): a path, or an object.
+const soundFile = z.union([
+  assetPath.transform((src) => ({src, loop: false, volume: 1})),
+  z.object({
+    src: assetPath,
+    loop: z.boolean().default(false),
+    volume: unit(1),
+  }),
+], {error: 'son invalide : un chemin comme "assets/pop.mp3", ou un objet { "src": "assets/ambiance.mp3", "loop": true, "volume": 0.5 }'})
+
 const triggerObject = z.discriminatedUnion('type', [
   z.object({type: z.literal('found')}),
   z.object({type: z.literal('delay'), ms: z.number().min(0).max(60000).default(1000)}),
@@ -86,6 +96,7 @@ const base = {
   z: z.number().min(-2).max(2).default(0),
   rotation: rotation.default(0),
   opacity: unit(1),
+  sound: soundFile.optional(),
 }
 
 // ---------------------------------------------------------------------------
@@ -125,7 +136,8 @@ export const videoBrick = z.object({
   width: z.number().positive().max(5).default(0.5),
   src: assetPath,
   loop: z.boolean().default(true),
-  sound: z.boolean().default(false),
+  // true = the video's own soundtrack; a file = a separate sound, like the other bricks.
+  sound: z.union([z.boolean(), soundFile]).default(false),
   chroma: z
     .object({
       keyColor: color.default('#00ff00'),
@@ -290,6 +302,11 @@ export const targetIds = (exp: {targets?: {id: string}[]}): string[] =>
 // Poster a brick is attached to: its "target", or the first poster.
 export const brickTarget = (b: {target?: string}, ids: string[]): string => b.target ?? ids[0]
 export type Trigger = Brick['trigger']
+export type SoundFile = z.output<typeof soundFile>
+
+// Sound file a brick plays when it appears ("sound": true on a video is its own soundtrack, not a file).
+export const brickSound = (b: Brick): SoundFile | null =>
+  b.sound && typeof b.sound === 'object' ? b.sound : null
 
 // ---------------------------------------------------------------------------
 // Validation with readable, French messages

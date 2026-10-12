@@ -5,7 +5,7 @@
 // poster is being looked at (it moves to the poster found most recently).
 
 import * as THREE from 'three'
-import {brickTarget, targetIds, type Experience} from './schema/schema'
+import {brickSound, brickTarget, targetIds, type Experience} from './schema/schema'
 import type {Stage, StageEvents} from './stage'
 import type {PosterTarget} from './ar/target'
 import {fromLocal, toLocal} from './ar/poster-anchor'
@@ -148,8 +148,12 @@ export class Runtime {
       }
     }))
 
-    // A video with sound needs a way to turn it on.
-    if (this.experience.bricks.some((b) => b.type === 'video' && b.sound)) mountSoundButton(this.sound)
+    // Sound is off until the viewer turns it on: any brick with sound gets the button.
+    const sounds = this.experience.bricks.map(brickSound).filter((s) => s !== null)
+    sounds.forEach((s) => this.sound.preload(s.src))
+    if (sounds.length || this.experience.bricks.some((b) => b.type === 'video' && b.sound === true)) {
+      mountSoundButton(this.sound)
+    }
     // The collection grid is screen UI: always visible.
     for (const brick of this.bricks) if (brick.config.type === 'collection') brick.show()
 

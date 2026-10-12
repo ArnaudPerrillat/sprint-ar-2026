@@ -3,13 +3,15 @@
 //   experience/assets/demo/typon-*.png   one transparent film per ink
 //   experience/assets/demo/fond-vert.mp4 green-screen video for the chroma key example (needs ffmpeg)
 //   experience/assets/demo/totem.glb     animated 3D model
-//   experience/assets/demo/boucle.wav    short sound loop
+//   experience/assets/demo/boucle.mp3    short sound loop (needs ffmpeg)
+//   experience/assets/demo/pop.mp3       short "pop" sound (needs ffmpeg)
 //
 // Usage: npm run demo-assets
 
 import sharp from 'sharp'
-import {mkdirSync, writeFileSync, existsSync} from 'node:fs'
+import {mkdirSync, writeFileSync, existsSync, rmSync} from 'node:fs'
 import {join} from 'node:path'
+import {tmpdir} from 'node:os'
 import {execFileSync} from 'node:child_process'
 import * as THREE from 'three'
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js'
@@ -362,8 +364,23 @@ const makeSound = () => {
   data.writeUInt16LE(16, 34)
   data.write('data', 36)
   data.writeUInt32LE(n * 2, 40)
-  writeFileSync(join(assetsDir, 'boucle.wav'), data)
-  console.log('✔ son boucle.wav')
+  // Browsers all read MP3 (iPhone included): the WAV is only an intermediate file.
+  const wav = join(tmpdir(), 'affiche-ra-boucle.wav')
+  writeFileSync(wav, data)
+  try {
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', wav, '-c:a', 'libmp3lame', '-b:a', '96k', join(assetsDir, 'boucle.mp3')])
+    // Short "pop": a falling chirp with a fast decay.
+    execFileSync('ffmpeg', [
+      '-y', '-loglevel', 'error',
+      '-f', 'lavfi', '-i', "aevalsrc='0.7*sin(2*PI*(900*t-2000*t*t))*exp(-22*t)':s=44100:d=0.25",
+      '-c:a', 'libmp3lame', '-b:a', '96k', join(assetsDir, 'pop.mp3'),
+    ])
+    console.log('✔ sons boucle.mp3 + pop.mp3')
+  } catch (err) {
+    console.warn('✖ sons non générés (ffmpeg absent ?)', (err as Error).message)
+  } finally {
+    rmSync(wav, {force: true})
+  }
 }
 
 main().catch((err) => {

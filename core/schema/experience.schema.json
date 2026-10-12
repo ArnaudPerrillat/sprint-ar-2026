@@ -307,6 +307,36 @@
                 "minimum": 0,
                 "maximum": 1
               },
+              "sound": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "src": {
+                        "type": "string",
+                        "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                      },
+                      "loop": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "volume": {
+                        "default": 1,
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "src"
+                    ]
+                  }
+                ]
+              },
               "type": {
                 "type": "string",
                 "const": "layers"
@@ -620,6 +650,43 @@
                 "minimum": 0,
                 "maximum": 1
               },
+              "sound": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "src": {
+                            "type": "string",
+                            "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                          },
+                          "loop": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "volume": {
+                            "default": 1,
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          }
+                        },
+                        "required": [
+                          "src"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
               "type": {
                 "type": "string",
                 "const": "video"
@@ -636,10 +703,6 @@
               },
               "loop": {
                 "default": true,
-                "type": "boolean"
-              },
-              "sound": {
-                "default": false,
                 "type": "boolean"
               },
               "chroma": {
@@ -894,6 +957,36 @@
                 "minimum": 0,
                 "maximum": 1
               },
+              "sound": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "src": {
+                        "type": "string",
+                        "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                      },
+                      "loop": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "volume": {
+                        "default": 1,
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "src"
+                    ]
+                  }
+                ]
+              },
               "type": {
                 "type": "string",
                 "const": "model"
@@ -1139,6 +1232,36 @@
                 "type": "number",
                 "minimum": 0,
                 "maximum": 1
+              },
+              "sound": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "src": {
+                        "type": "string",
+                        "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                      },
+                      "loop": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "volume": {
+                        "default": 1,
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "src"
+                    ]
+                  }
+                ]
               },
               "type": {
                 "type": "string",
@@ -1452,6 +1575,36 @@
                 "minimum": 0,
                 "maximum": 1
               },
+              "sound": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "src": {
+                        "type": "string",
+                        "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                      },
+                      "loop": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "volume": {
+                        "default": 1,
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "src"
+                    ]
+                  }
+                ]
+              },
               "type": {
                 "type": "string",
                 "const": "ui"
@@ -1741,6 +1894,36 @@
                 "type": "number",
                 "minimum": 0,
                 "maximum": 1
+              },
+              "sound": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "src": {
+                        "type": "string",
+                        "pattern": "^assets\\/[^\\s].*\\.[a-zA-Z0-9]+$"
+                      },
+                      "loop": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "volume": {
+                        "default": 1,
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "src"
+                    ]
+                  }
+                ]
               },
               "type": {
                 "type": "string",

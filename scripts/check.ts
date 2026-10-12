@@ -10,7 +10,7 @@ import {existsSync, readFileSync, readdirSync, statSync} from 'node:fs'
 import {join, relative, extname} from 'node:path'
 import {execFileSync} from 'node:child_process'
 import sharp from 'sharp'
-import {parseJsonText, validateExperience, type Brick} from '../core/schema/schema.ts'
+import {brickSound, parseJsonText, validateExperience, type Brick} from '../core/schema/schema.ts'
 import {isCoreIntact, readSealedHash} from './lib/core-hash.ts'
 
 const BUDGET_MB = 15
@@ -75,6 +75,11 @@ const videoSize = (file: string): {width: number; height: number} | null => {
 }
 
 const assetsOf = (b: Brick): string[] => {
+  const sound = brickSound(b)
+  return [...brickAssets(b), ...(sound ? [sound.src] : [])]
+}
+
+const brickAssets = (b: Brick): string[] => {
   switch (b.type) {
     case 'layers':
       return b.layers.map((l) => l.src)
@@ -127,7 +132,10 @@ const main = async () => {
           warn(`${src} fait ${meta.width}×${meta.height} px : réduis à ${MAX_IMAGE_PX} px max (plus léger, plus fluide sur téléphone)`)
         }
       }
-      if (brick.type === 'video') {
+      if (src === brickSound(brick)?.src && ext !== '.mp3') {
+        warn(`${src} : utilise un fichier .mp3 (le seul format qui marche partout, iPhone compris)`)
+      }
+      if (brick.type === 'video' && src === brick.src) {
         const size = videoSize(file)
         if (!size) warn(`${src} : résolution non vérifiée (installe ffprobe, ou utilise du .mp4)`)
         else if (Math.max(size.width, size.height) > MAX_VIDEO_LONG || Math.min(size.width, size.height) > MAX_VIDEO_SHORT) {
@@ -135,7 +143,7 @@ const main = async () => {
         } else ok(`${src} : ${size.width}×${size.height}`)
         if (ext === '.webm') warn(`${src} : le WebM ne marche pas sur iPhone, utilise du .mp4 (H.264)`)
       }
-      if (brick.type === 'model' && ext !== '.glb') warn(`${src} : utilise un fichier .glb (un seul fichier, textures incluses)`)
+      if (brick.type === 'model' && src === brick.src && ext !== '.glb') warn(`${src} : utilise un fichier .glb (un seul fichier, textures incluses)`)
     }
   }
   if (/^assets\//.test(experience.theme.font) && !existsSync(join(expDir, experience.theme.font))) {

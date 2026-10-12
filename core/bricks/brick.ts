@@ -1,10 +1,10 @@
 // Common brick machinery: placement in poster space, appear/disappear animations, fading.
 
 import * as THREE from 'three'
-import type {Brick} from '../schema/schema'
+import {brickSound, type Brick} from '../schema/schema'
 import {toLocal} from '../ar/poster-anchor'
 import type {Tweens, TweenHandle} from '../util/tween'
-import type {Sound} from '../util/sound'
+import type {Sound, SoundHandle} from '../util/sound'
 import type {Collection} from '../collection'
 
 export interface ViewState {
@@ -42,6 +42,8 @@ export abstract class BrickBase<T extends Brick = Brick> {
   shown = false
   private fade = 1
   private anim: TweenHandle | null = null
+  // Sound of the "sound" option, playing while the brick is shown.
+  private soundHandle: SoundHandle | null = null
   // height / width of the poster the brick is attached to.
   protected ratio = Math.SQRT2
   // Poster id the brick currently lives on.
@@ -93,6 +95,7 @@ export abstract class BrickBase<T extends Brick = Brick> {
     this.shown = true
     this.anim?.cancel()
     this.holder.visible = true
+    this.playSound()
     this.onShow()
     const {appear, duration} = this.config
     const holder = this.holder
@@ -116,6 +119,7 @@ export abstract class BrickBase<T extends Brick = Brick> {
     if (!this.shown) return
     this.shown = false
     this.anim?.cancel()
+    this.stopSound()
     this.onHide()
     const base = toLocal(this.ratio, this.config.x, this.config.y, this.config.z)
     const duration = fast ? 200 : Math.min(this.config.duration, 400)
@@ -141,9 +145,22 @@ export abstract class BrickBase<T extends Brick = Brick> {
   // Resets to the hidden state without animation (used before replaying an experience).
   reset(): void {
     this.anim?.cancel()
+    this.stopSound()
     this.shown = false
     this.holder.visible = false
     this.onHidden()
+  }
+
+  private playSound(): void {
+    const sound = brickSound(this.config)
+    if (!sound) return
+    this.stopSound()
+    this.soundHandle = this.env.sound.play(sound.src, {loop: sound.loop, volume: sound.volume})
+  }
+
+  private stopSound(): void {
+    this.soundHandle?.stop()
+    this.soundHandle = null
   }
 
   private applyAppear(k: number, base: THREE.Vector3, hiding = false): void {
@@ -198,6 +215,7 @@ export abstract class BrickBase<T extends Brick = Brick> {
 
   dispose(): void {
     this.anim?.cancel()
+    this.stopSound()
     this.content.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       mesh.geometry?.dispose()

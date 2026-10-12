@@ -39,6 +39,8 @@ Ordre de préférence :
 2. une combinaison de briques et de déclencheurs (`found`, `tap`, `delay`, `tilt`, `distance`, `collected`) ;
 3. seulement si c'est impossible autrement : un behavior dans `experience/behaviors/`.
 
+**Son** : pas besoin de behavior. Toute brique accepte `"sound": "assets/pop.mp3"` (joué quand elle apparaît, arrêté quand elle disparaît) ou `"sound": { "src": "assets/ambiance.mp3", "loop": true, "volume": 0.5 }`. Le moment se règle avec le `trigger` de la brique. Le bouton haut-parleur apparaît tout seul ; préviens l'étudiant·e que le spectateur doit le toucher pour entendre, et que dans l'aperçu il faut aussi cliquer dessus. Sur une `video`, `"sound": true` active le son de la vidéo elle-même. Modèle : `examples/07-son`.
+
 Un behavior respecte **exactement** cette forme, sans `import` :
 
 ```js
@@ -59,7 +61,7 @@ Il n'utilise que ce que fournit `ctx` (décrit dans `core/behaviors.d.ts`) : `ct
 - Images : PNG (transparence) ou JPG, 2048 px maximum de côté.
 - Vidéos : `.mp4` H.264, 720p maximum, quelques secondes en boucle ; pour la transparence, fond vert uni + `chroma` (le WebM transparent ne marche pas sur iPhone).
 - Modèles 3D : un seul fichier `.glb`, idéalement < 5 Mo.
-- Sons : `.mp3`.
+- Sons : `.mp3`, courts et légers (une boucle de quelques secondes suffit).
 
 ## 6. Méthode de travail
 
@@ -67,4 +69,4 @@ Il n'utilise que ce que fournit `ctx` (décrit dans `core/behaviors.d.ts`) : `ct
 - Propose une traduction en briques + déclencheurs, **fais valider**, puis écris `experience.json`.
 - Après chaque modification, dis comment vérifier dans l'aperçu : boutons « ▶ Détection », « ■ Perte », « Tap », et en tournant autour de l'affiche à la souris.
 - Si l'aperçu affiche un panneau d'erreurs, lis le message (il est en français) et corrige `experience.json` en conséquence.
-- Pour t'inspirer, lis les exemples (sans les modifier) : `examples/01-typons`, `examples/02-video`, `examples/03-modele`, `examples/04-behavior`, `examples/05-puzzle`.
+- Pour t'inspirer, lis les exemples (sans les modifier) : `examples/01-typons`, `examples/02-video`, `examples/03-modele`, `examples/04-behavior`, `examples/05-puzzle`, `examples/07-son`.

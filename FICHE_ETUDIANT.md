@@ -64,6 +64,8 @@ Ton expérience est une liste de briques. L'agent écrit le code, mais connaîtr
 | `ui` | pastilles d'info cliquables, gros bouton d'action, bouton son |
 | `collection` | la grille des affiches trouvées (projets à plusieurs affiches) |
 
+**Du son ?** Chaque brique peut jouer un `.mp3` quand elle apparaît (option `sound` : un bruitage, ou une ambiance en boucle). Demande-le simplement à l'agent ; exemple : « Exemple 7 · son » dans l'aperçu. Pour l'entendre, touche le bouton haut-parleur en haut à droite.
+
 | Déclencheur | Quand ça apparaît |
 | --- | --- |
 | `found` | dès que l'affiche est détectée |
