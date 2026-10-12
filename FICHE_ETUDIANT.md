@@ -10,6 +10,12 @@
 - `experience/assets/` : tes fichiers (PNG, vidéos, modèles 3D, sons)
 - `experience/target/` : la cible de ton affiche, donnée par l'enseignant (n'y touche pas)
 
+## Un seul projet par groupe
+
+**Une seule personne par groupe fait la manipulation.** Choisissez une personne « pilote » : c'est elle qui crée le projet sur son ordinateur, avec ses comptes (GitHub et Google AI Studio), et qui parle à l'agent. Les autres l'aident à suivre les étapes, préparent les fichiers (affiches, typons, images, sons) et le storyboard, et les lui envoient. Si chacun·e crée son propre projet, vous aurez des versions différentes, impossibles à réunir ensuite.
+
+Le QR du bouton **QR** de l'aperçu AI Studio ne marche que sur le téléphone de la personne pilote ; le reste du groupe teste avec l'adresse GitHub Pages.
+
 ## Démarrer en 5 étapes
 
 Objectif : voir ton affiche dans l'aperçu d'AI Studio avant de créer quoi que ce soit.
