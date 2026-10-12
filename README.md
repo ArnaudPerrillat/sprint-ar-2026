@@ -308,7 +308,8 @@ Ce que contient `ctx` (détail dans `core/behaviors.d.ts`) :
 - `ctx.state` : mémoire libre ; `ctx.log('message')` : affiche un message ;
 - `ctx.asset('assets/pochette.jpg')` : l'adresse complète d'un fichier de `experience/`, pour un `<img>` ou un `new Audio()` ;
 - `ctx.ui` : ta propre interface à l'écran (un lecteur, un score…), voir ci-dessous ;
-- `ctx.deezer('/playlist/1234567/tracks')` : l'API publique de Deezer en lecture seule (titres, pochettes, extraits de 30 s), **seulement si ton enseignant l'a autorisée** (fichier `experience/API.md`).
+- `ctx.deezer('/playlist/1234567/tracks')` : l'API publique de Deezer en lecture seule (titres, pochettes, extraits de 30 s), **seulement si ton enseignant l'a autorisée** (fichier `experience/API.md`) ;
+- `ctx.shared` : une liste partagée par tous les visiteurs de l'affiche (ex. une playlist collaborative) : `ctx.shared.add('playlist', { deezerId })`, `ctx.shared.list('playlist')`, `ctx.shared.watch('playlist', (elements) => …)`. Ajout seulement (jamais de modification ni de suppression), **sur autorisation** : `experience/API.md` te donne l'identifiant à mettre dans `"shared"` de `experience.json`.
 
 ### Une interface à toi : `ctx.ui`
 

@@ -65,6 +65,25 @@ export interface Ui {
   style(css: string): void
 }
 
+export interface SharedItem {
+  id: string
+  deezerId?: number
+  texte?: string
+  nombre?: number
+  // Time of the addition (server clock), in milliseconds since 1970: new Date(item.date).
+  date: number
+}
+
+export interface Shared {
+  // Adds an item seen by every visitor. Only these fields: deezerId (integer), texte (1-140
+  // characters), nombre. Items can never be changed or deleted from the site.
+  add(list: string, value: {deezerId?: number; texte?: string; nombre?: number}): Promise<SharedItem>
+  // The whole list, oldest first (500 items max).
+  list(list: string): Promise<SharedItem[]>
+  // Calls back now, then whenever the list changes (checked every 5 s). Returns stop().
+  watch(list: string, callback: (items: SharedItem[]) => void, onError?: (err: Error) => void): () => void
+}
+
 export interface Ctx {
   readonly THREE: typeof THREE_NS
   // Group anchored on the poster being looked at (the last one found): origin at its centre,
@@ -108,6 +127,11 @@ export interface Ctx {
   // /playlist/{id}(/tracks), and the "next" URL of a paginated answer.
   // Rejects with a French message if Deezer is unreachable or answers an error.
   deezer(path: string, params?: Record<string, string | number | boolean>): Promise<any>
+  // Lists shared by every visitor (a collaborative playlist...). Needs "shared": "<id>" in
+  // experience.json, given by your teacher in experience/API.md. Rejects with a French message.
+  //   await ctx.shared.add('playlist', {deezerId: 3135556})
+  //   const stop = ctx.shared.watch('playlist', (items) => { ... })
+  readonly shared: Shared
   // Screen UI built by your behavior (a player, a score, a form...).
   readonly ui: Ui
   // Free storage for your behavior (keeps values between calls).

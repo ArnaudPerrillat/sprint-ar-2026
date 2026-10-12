@@ -272,6 +272,11 @@ const topLevelShape = {
       font: z.string().default('system-ui'),
     })
     .default({color: '#ff3b30', textColor: '#ffffff', font: 'system-ui'}),
+  // Shared lists (ctx.shared): id given by the teacher in experience/API.md.
+  shared: z
+    .string()
+    .regex(/^[a-z0-9-]{3,40}$/, {error: 'identifiant de partage invalide : 3 à 40 caractères, minuscules, chiffres ou - (fourni par ton enseignant)'})
+    .optional(),
   behaviors: z
     .array(z.string().regex(/^[a-zA-Z0-9_-]+$/, {
       error: 'nom de behavior invalide : lettres, chiffres, - ou _ (sans ".js")',

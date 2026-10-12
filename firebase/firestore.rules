@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// Stockage partagé des expériences (ctx.shared, RULES.md § 4 bis).
+// Chemin : projets/{projet}/{liste}/{element}. Lecture et ajout seulement : personne ne peut
+// modifier ni supprimer depuis le site (la modération se fait dans la console Firebase).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function validId(s) {
+      return s is string && s.matches('^[a-z0-9-]{3,40}$');
+    }
+
+    function validItem(d) {
+      return d.keys().hasOnly(['deezerId', 'texte', 'nombre', 'createdAt'])
+        && d.keys().size() >= 2
+        && d.createdAt == request.time
+        && (!('deezerId' in d) || (d.deezerId is int && d.deezerId > 0))
+        && (!('texte' in d) || (d.texte is string && d.texte.size() > 0 && d.texte.size() <= 140))
+        && (!('nombre' in d) || d.nombre is number);
+    }
+
+    match /projets/{projet}/{liste}/{element} {
+      allow read: if validId(projet) && validId(liste);
+      allow create: if validId(projet) && validId(liste) && validItem(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

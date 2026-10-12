@@ -20,6 +20,7 @@ import {mountSoundButton} from './ui/sound-button'
 import {Collection} from './collection'
 import {Panels, type PanelOptions} from './ui/panels'
 import {deezer} from './util/deezer'
+import {Shared, type SharedItem, type SharedValue} from './util/shared'
 
 interface Scheduled {
   brick: BrickBase
@@ -411,6 +412,7 @@ export class Runtime {
     const handles = new Map(this.bricks.map((b) => [b.id, this.handle(b)]))
     const runtime = this
     const collection = this.collection
+    const shared = new Shared(this.experience.shared ?? null)
     return Object.freeze({
       THREE,
       get poster() {
@@ -455,6 +457,12 @@ export class Runtime {
       }),
       asset: (path: string) => experienceUrl(path),
       deezer: (path: string, params?: Record<string, string | number | boolean>) => deezer(path, params),
+      shared: Object.freeze({
+        add: (list: string, value: SharedValue) => shared.add(list, value),
+        list: (list: string) => shared.list(list),
+        watch: (list: string, cb: (items: SharedItem[]) => void, onError?: (err: Error) => void) =>
+          shared.watch(list, cb, onError),
+      }),
       ui: Object.freeze({
         panel: (id: string, options?: PanelOptions) => runtime.panels.panel(id, options),
         get: (id: string) => runtime.panels.get(id),

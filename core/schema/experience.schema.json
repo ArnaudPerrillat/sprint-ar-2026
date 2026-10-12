@@ -77,6 +77,10 @@
         }
       }
     },
+    "shared": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{3,40}$"
+    },
     "behaviors": {
       "default": [],
       "maxItems": 5,

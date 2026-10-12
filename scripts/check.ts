@@ -93,10 +93,20 @@ const checkBehaviorScope = (name: string, source: string): void => {
   for (const [re, message] of BEHAVIOR_RULES) {
     if (re.test(code)) warn(`behavior « ${name} » : ${message}`)
   }
-  if (/\bctx\.deezer\b/.test(code) && !existsSync(join(configDir, 'API.md'))) {
-    warn(`behavior « ${name} » utilise ctx.deezer sans ${relative(root, join(configDir, 'API.md'))} : demande l'autorisation à ton enseignant`)
+  for (const api of ['deezer', 'shared']) {
+    if (new RegExp(`\\bctx\\.${api}\\b`).test(code) && !existsSync(join(configDir, 'API.md'))) {
+      warn(`behavior « ${name} » utilise ctx.${api} sans ${relative(root, join(configDir, 'API.md'))} : demande l'autorisation à ton enseignant`)
+    }
+  }
+  if (/\bctx\.shared\b/.test(code) && !experienceShared) {
+    warn(`behavior « ${name} » utilise ctx.shared sans "shared" dans experience.json (l'identifiant est dans API.md)`)
+  }
+  if (/\bfirebase|firestore\.googleapis/i.test(code)) {
+    warn(`behavior « ${name} » : accès direct à Firebase interdit, utilise ctx.shared`)
   }
 }
+
+let experienceShared: string | undefined
 
 const assetsOf = (b: Brick): string[] => {
   const sound = brickSound(b)
@@ -136,6 +146,7 @@ const main = async () => {
     return finish()
   }
   const {experience, issues} = validateExperience(data)
+  experienceShared = experience.shared
   issues.forEach((i) => (i.level === 'error' ? error(i.message) : warn(i.message)))
   if (!issues.some((i) => i.level === 'error')) ok(`schéma valide (${experience.bricks.length} brique${experience.bricks.length > 1 ? 's' : ''})`)
 
