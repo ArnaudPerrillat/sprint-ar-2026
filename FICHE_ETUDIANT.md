@@ -124,7 +124,9 @@ L'aperçu d'AI Studio n'a pas de caméra : le vrai test se fait sur ton téléph
 4. Ouvre cette adresse sur ordinateur, clique sur **QR** en bas, scanne avec l'appareil photo du téléphone.
 5. Touche **Démarrer l'expérience**, autorise la caméra, vise **toute** l'affiche en pleine lumière : ton affiche imprimée en A4 ou plus (conseillé), ou affichée en plein écran (dépannage).
 
-Le QR affiché dans l'aperçu d'AI Studio ne marche pas sur téléphone : utilise toujours l'adresse GitHub Pages. Ouvre le lien dans Safari (iPhone) ou Chrome (Android), pas dans Instagram ni Messenger.
+**Raccourci pendant le travail :** le bouton **QR** de l'aperçu d'AI Studio ouvre ton aperçu sur ton téléphone (adresse `…run.app`), sans publier. Il faut être connecté·e au même compte Google dans le navigateur du téléphone. Cette adresse est **privée** (toi seul·e, tant que le projet est ouvert dans AI Studio) : ne la donne jamais au public, l'adresse à partager est celle de GitHub Pages.
+
+Ouvre le lien dans Safari (iPhone) ou Chrome (Android), pas dans Instagram ni Messenger.
 
 À rendre en fin de journée : ton adresse GitHub Pages + le QR code imprimé près de ton affiche.
 
