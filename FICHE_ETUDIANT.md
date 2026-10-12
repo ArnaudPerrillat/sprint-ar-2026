@@ -17,10 +17,25 @@ Objectif : voir ton affiche dans l'aperçu d'AI Studio avant de créer quoi que 
 - [ ] **1. Copier le projet** : sur [github.com/ArnaudPerrillat/sprint-ar-2026](https://github.com/ArnaudPerrillat/sprint-ar-2026), bouton **Use this template › Create a new repository**. Nom simple, sans espace ni accent (ex. `affiche-ra`).
 - [ ] **2. Activer la publication** : dans ton dépôt, **Settings › Pages › Source : GitHub Actions**.
 - [ ] **3. Ouvrir dans AI Studio** : [aistudio.google.com](https://aistudio.google.com), mode **Build**, bouton **+** › **Import from GitHub**, choisis ton dépôt.
-- [ ] **4. Générer et déposer ta cible** : sur [l'outil de cibles](https://arnaudperrillat.github.io/sprint-ar-2026/cibles.html), dépose le fichier final de ton affiche, vérifie le score de reconnaissance, télécharge le zip. Dézippe-le, puis sur GitHub, dans `experience/target/` : **Add file › Upload files** avec tous les fichiers, et **Commit changes**. Récupère ensuite les changements dans AI Studio.
+- [ ] **4. Générer et déposer ta cible** : sur [l'outil de cibles](https://arnaudperrillat.github.io/sprint-ar-2026/cibles.html), dépose le fichier final de ton affiche (voir « Le fichier de mon affiche » ci-dessous), vérifie le score de reconnaissance, télécharge le zip. Dézippe-le, puis sur GitHub, dans `experience/target/` : **Add file › Upload files** avec tous les fichiers, et **Commit changes**. Récupère ensuite les changements dans AI Studio (ou fais cette étape avant l'étape 3 : l'import embarque alors directement ta cible).
 - [ ] **5. Lancer l'agent** : colle le message de `STARTER_PROMPT.md` (dans le projet) comme premier message, avec ton storyboard.
 
 Dans l'aperçu : **▶ Détection** rejoue l'arrivée sur l'affiche, **■ Perte** simule la perte, **Tap** simule un toucher, et tu tournes autour de l'affiche à la souris. Le menu en bas à gauche montre 5 exemples.
+
+## Le fichier de mon affiche (pour la cible)
+
+Le téléphone ne reconnaît que l'image apprise : la « cible », générée à partir de ton affiche.
+
+- **L'affiche finale, pas les typons** : l'image complète, toutes couleurs superposées, exactement comme le public la verra. Pas un typon séparé, pas un calque, pas une version de travail.
+- **Format** : PNG ou JPG, au moins 1500 px de large (idéal : 2000 à 3000 px). Un PDF ne marche pas : exporte depuis InDesign, Illustrator ou Photoshop.
+- **Cadrage** : le format fini, **sans fond perdu ni traits de coupe**.
+- **Score** : l'outil affiche un score de reconnaissance ; 18 000 points d'accroche ou plus est conseillé. Un score faible = affiche trop uniforme (grands aplats) : teste tôt.
+- **Version définitive** : si ton affiche change, refais la cible, sinon elle n'est plus reconnue ou le contenu est décalé.
+
+Pour tester sur téléphone :
+
+- **Conseillé : une impression couleur en A4** (ou A3), sur papier mat. Jet d'encre ou laser suffit : la sérigraphie finale sera reconnue si le visuel est le même.
+- **Dépannage : l'affiche en plein écran** sur un ordinateur ou une tablette, luminosité au maximum. Ça devrait marcher, mais reflets et scintillement gênent la détection : refais le test sur papier dès que possible.
 
 ## Mon storyboard
 
@@ -107,7 +122,7 @@ L'aperçu d'AI Studio n'a pas de caméra : le vrai test se fait sur ton téléph
 2. Dans ton dépôt, onglet **Actions** : attends la coche verte (1 à 2 minutes).
 3. Ton site est à l'adresse `https://ton-pseudo.github.io/nom-du-depot/`.
 4. Ouvre cette adresse sur ordinateur, clique sur **QR** en bas, scanne avec l'appareil photo du téléphone.
-5. Touche **Démarrer l'expérience**, autorise la caméra, vise **toute** l'affiche en pleine lumière.
+5. Touche **Démarrer l'expérience**, autorise la caméra, vise **toute** l'affiche en pleine lumière : ton affiche imprimée en A4 ou plus (conseillé), ou affichée en plein écran (dépannage).
 
 Le QR affiché dans l'aperçu d'AI Studio ne marche pas sur téléphone : utilise toujours l'adresse GitHub Pages. Ouvre le lien dans Safari (iPhone) ou Chrome (Android), pas dans Instagram ni Messenger.
 
@@ -121,10 +136,12 @@ Commence toujours par lire le panneau d'erreurs de l'aperçu : il dit quelle bri
 | --- | --- |
 | « n'est pas un JSON valide (ligne X) » | virgule en trop après le dernier élément, ou guillemets courbes « “ ” » au lieu de `"` : colle le message à l'agent |
 | « impossible de charger assets/… » | vérifie que le fichier est bien dans `experience/assets/`, avec exactement ce nom (majuscules, accents) |
-| « Aucune cible trouvée » | dépose le dossier de cible de l'enseignant dans `experience/target/` |
+| « Aucune cible trouvée » | génère ta cible avec l'outil de cibles et dépose tous ses fichiers dans `experience/target/` |
+| L'outil de cibles refuse mon fichier | exporte l'affiche en PNG ou JPG (pas en PDF), au moins 1500 px de large |
+| L'aperçu montre l'affiche de démo, pas la mienne | ta cible n'est pas dans `experience/target/` (vérifie `target.json` sur GitHub), puis récupère les changements dans AI Studio |
 | Bandeau rouge « core/ a été modifié » | demande à l'agent d'annuler son dernier changement, préviens l'enseignant |
 | L'affiche n'est pas détectée | vise toute l'affiche, en pleine lumière, sans reflet ; recule un peu |
-| Le contenu est décalé | la cible ne correspond pas à la version imprimée : demande une nouvelle cible à l'enseignant |
+| Le contenu est décalé | la cible ne correspond pas à la version imprimée (autre version, fond perdu, recadrage) : refais la cible avec le fichier exact que tu as imprimé |
 | Pas de son | touche le bouton haut-parleur ; enlève le mode silencieux (iPhone) |
 | Le site n'a pas changé | onglet Actions : attends la coche verte ; une croix rouge = appelle l'enseignant |
 | Page noire, « navigateur non compatible » | ouvre le lien dans Safari ou Chrome |
