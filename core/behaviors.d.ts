@@ -45,6 +45,26 @@ export interface TweenOptions {
   onComplete?: () => void
 }
 
+export interface PanelOptions {
+  // 'bottom' (default): a card at the bottom of the screen. 'top': at the top.
+  // 'free': no placement at all, position it yourself in ctx.ui.style().
+  position?: 'bottom' | 'top' | 'free'
+  // true: stays on screen when the poster is lost (e.g. a player that keeps playing).
+  keep?: boolean
+}
+
+export interface Ui {
+  // Your own HTML panel above the AR view (class "ra-panel" + your id, for your CSS). Calling it
+  // again with the same id returns the same element: safe to call in every onFound.
+  // Hidden while no poster is in view (unless keep: true). Taps on it never reach the AR scene.
+  panel(id: string, options?: PanelOptions): HTMLElement
+  get(id: string): HTMLElement | undefined
+  remove(id: string): void
+  // CSS that only applies inside your panels. Theme variables: --ra-color, --ra-text, --ra-font,
+  // --ra-bg. @keyframes are allowed.
+  style(css: string): void
+}
+
 export interface Ctx {
   readonly THREE: typeof THREE_NS
   // Group anchored on the poster being looked at (the last one found): origin at its centre,
@@ -79,6 +99,17 @@ export interface Ctx {
     readonly enabled: boolean
     play(path: string, options?: {loop?: boolean; volume?: number}): {stop(): void}
   }
+  // Full URL of a file in experience/: ctx.asset('assets/pochette.jpg'), for an <img>, new Audio()...
+  asset(path: string): string
+  // Deezer's public API, read only (only if your teacher allowed it: experience/API.md).
+  //   const {data} = await ctx.deezer('/playlist/1234567/tracks')
+  //   const {data} = await ctx.deezer('/search', {q: 'daft punk', limit: 10})
+  // Allowed: /search, /track/{id}, /album/{id}(/tracks), /artist/{id}(/top|/albums),
+  // /playlist/{id}(/tracks), and the "next" URL of a paginated answer.
+  // Rejects with a French message if Deezer is unreachable or answers an error.
+  deezer(path: string, params?: Record<string, string | number | boolean>): Promise<any>
+  // Screen UI built by your behavior (a player, a score, a form...).
+  readonly ui: Ui
   // Free storage for your behavior (keeps values between calls).
   readonly state: Record<string, unknown>
   // Shows a message in the on-screen panel.

@@ -344,6 +344,37 @@ html, body {
 
 .is-preview .ra-cta { bottom: calc(var(--ra-debug-h, 60px) + 24px); }
 
+/* ---------- behavior panels (ctx.ui) ---------- */
+
+.ra-panels { position: absolute; inset: 0; pointer-events: none; }
+.ra-panels > .ra-panel[hidden] { display: none !important; }
+
+.ra-panel {
+  position: absolute;
+  pointer-events: auto;
+  color: var(--ra-text);
+  font-family: var(--ra-font);
+}
+
+.ra-panel.is-bottom,
+.ra-panel.is-top {
+  left: 12px;
+  right: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--ra-bg);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.ra-panel.is-bottom { bottom: max(16px, env(safe-area-inset-bottom)); }
+.ra-panel.is-top { top: max(16px, env(safe-area-inset-top)); }
+.ra-panel.is-free { left: 0; top: 0; }
+.is-preview .ra-panel.is-bottom { bottom: calc(var(--ra-debug-h, 60px) + 16px); }
+
+.ra-panel button { font: inherit; color: inherit; cursor: pointer; }
+
 .ra-sheet {
   position: fixed;
   left: 12px;

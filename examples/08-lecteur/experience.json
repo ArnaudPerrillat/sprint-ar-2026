@@ -1,0 +1,21 @@
+{
+  "$schema": "../../core/schema/experience.schema.json",
+  "//": "EXEMPLE 8 (avancé) — Un lecteur audio en interface, construit par un behavior avec ctx.ui.panel(). Le panneau apparaît à la détection de l'affiche ; il reste à l'écran après la perte (keep: true) pour que la musique continue. Le graphisme du lecteur est volontairement minimal : c'est à toi de le dessiner.",
+  "title": "Affiche démo — lecteur",
+  "author": "DNMade 2 Numérique",
+  "theme": { "color": "#1d4bff", "textColor": "#ffffff", "font": "Space Grotesk" },
+  "behaviors": ["lecteur"],
+  "bricks": [
+    {
+      "id": "typons",
+      "type": "layers",
+      "layers": [
+        { "src": "assets/demo/typon-1-jaune.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-2-rose.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-3-bleu.png", "blend": "multiply" },
+        { "src": "assets/demo/typon-4-noir.png" }
+      ],
+      "spread": 0.05
+    }
+  ]
+}

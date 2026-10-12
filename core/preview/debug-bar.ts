@@ -13,6 +13,7 @@ const EXAMPLES: [string, string][] = [
   ['04-behavior', 'Exemple 4 · behavior'],
   ['05-puzzle', 'Exemple 5 · puzzle (4 affiches)'],
   ['07-son', 'Exemple 7 · son'],
+  ['08-lecteur', 'Exemple 8 · lecteur (ctx.ui)'],
 ]
 
 const button = (label: string, title: string, onClick: () => void): HTMLButtonElement => {

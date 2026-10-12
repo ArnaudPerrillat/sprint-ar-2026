@@ -18,6 +18,8 @@ import {report, errorMessage} from './ui/errors'
 import type {Behavior, BrickHandle, Ctx, TapHit} from './behaviors'
 import {mountSoundButton} from './ui/sound-button'
 import {Collection} from './collection'
+import {Panels, type PanelOptions} from './ui/panels'
+import {deezer} from './util/deezer'
 
 interface Scheduled {
   brick: BrickBase
@@ -62,6 +64,7 @@ export class Runtime {
   private ctx!: Ctx
   private raycaster = new THREE.Raycaster()
   private overlay: HTMLElement
+  private panels: Panels
   private listeners = new Set<(tracked: boolean) => void>()
 
   constructor(
@@ -78,6 +81,7 @@ export class Runtime {
       if (added === null) this.tracked.forEach((id) => this.collection.add(id))
     })
     this.overlay = document.getElementById('ra-hotspots') ?? document.body
+    this.panels = new Panels(this.overlay)
     window.addEventListener('deviceorientation', (e) => {
       this.device.alpha = e.alpha ?? 0
       this.device.beta = e.beta ?? 0
@@ -205,6 +209,7 @@ export class Runtime {
     this.everFound.add(id)
     this.collection.add(id)
     this.notify()
+    this.panels.setActive(true)
     for (const brick of this.bricks) {
       if (this.isScreenUi(brick)) continue
       if (this.isFloating(brick)) {
@@ -236,6 +241,7 @@ export class Runtime {
         brick.hide(true)
       }
     }
+    this.panels.setActive(this.anyActive)
     this.callBehaviors('onLost', id)
   }
 
@@ -266,6 +272,7 @@ export class Runtime {
     this.elapsed += dt
     this.tweens.update(dt)
     this.updateView()
+    this.panels.setActive(this.anyActive)
 
     for (const [id, s] of this.scheduled) {
       if (!this.posterActive(s.brick.posterId)) continue
@@ -445,6 +452,14 @@ export class Runtime {
           return runtime.sound.enabled
         },
         play: (path: string, options?: {loop?: boolean; volume?: number}) => runtime.sound.play(path, options),
+      }),
+      asset: (path: string) => experienceUrl(path),
+      deezer: (path: string, params?: Record<string, string | number | boolean>) => deezer(path, params),
+      ui: Object.freeze({
+        panel: (id: string, options?: PanelOptions) => runtime.panels.panel(id, options),
+        get: (id: string) => runtime.panels.get(id),
+        remove: (id: string) => runtime.panels.remove(id),
+        style: (css: string) => runtime.panels.style(css),
       }),
       state: {},
       log: (message: string) => report('warning', `Behavior : ${message}`),

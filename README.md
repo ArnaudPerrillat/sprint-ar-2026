@@ -305,7 +305,27 @@ Ce que contient `ctx` (détail dans `core/behaviors.d.ts`) :
 - `ctx.THREE`, `ctx.poster`, `ctx.toLocal(x, y, z)` ;
 - `ctx.tween({...})`, `ctx.sound.play('assets/pop.mp3', { loop, volume })` (renvoie un objet avec `stop()` ; si aucune brique n'a de `sound`, ajoute une brique `ui` avec `"soundButton": true`, sinon on n'entend rien) ;
 - `ctx.target` (affiche visée), `ctx.collection` (`has(id)`, `count`, `total`, `complete`) ;
-- `ctx.state` : mémoire libre ; `ctx.log('message')` : affiche un message.
+- `ctx.state` : mémoire libre ; `ctx.log('message')` : affiche un message ;
+- `ctx.asset('assets/pochette.jpg')` : l'adresse complète d'un fichier de `experience/`, pour un `<img>` ou un `new Audio()` ;
+- `ctx.ui` : ta propre interface à l'écran (un lecteur, un score…), voir ci-dessous ;
+- `ctx.deezer('/playlist/1234567/tracks')` : l'API publique de Deezer en lecture seule (titres, pochettes, extraits de 30 s), **seulement si ton enseignant l'a autorisée** (fichier `experience/API.md`).
+
+### Une interface à toi : `ctx.ui`
+
+```js
+onFound(ctx) {
+  const panneau = ctx.ui.panel('lecteur')          // un <div> en bas de l'écran
+  panneau.innerHTML = '<button class="lecture">▶</button>'
+  ctx.ui.style('.lecture { background: var(--ra-color); }')
+}
+```
+
+- `ctx.ui.panel(id, { position, keep })` : `position` vaut `"bottom"` (par défaut), `"top"` ou `"free"` (tu le places toi-même en CSS) ; `keep: true` le laisse à l'écran quand l'affiche est perdue (sinon il se cache, puis revient). Le même `id` renvoie toujours le même panneau : pas de doublon si `onFound` est rappelé.
+- `ctx.ui.style(css)` : ton CSS, qui ne touche que tes panneaux. Variables du thème : `--ra-color`, `--ra-text`, `--ra-font`, `--ra-bg`.
+- `ctx.ui.get(id)`, `ctx.ui.remove(id)`.
+- Un tap sur ton panneau ne déclenche pas de tap sur l'affiche.
+
+Exemple complet, un lecteur audio : [`examples/08-lecteur`](examples/08-lecteur).
 
 Si ton behavior plante, l'erreur s'affiche dans le panneau ; après 3 erreurs dans `onUpdate`, il est désactivé, et le reste de l'expérience continue.
 

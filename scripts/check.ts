@@ -2,7 +2,8 @@
 //   - experience.json: JSON syntax + schema (same rules as the app)
 //   - every referenced file exists (assets, behaviors, target)
 //   - weight budget (15 MB), video resolution (720p max), image size (2048 px max)
-//   - behaviors: JavaScript syntax
+//   - behaviors: JavaScript syntax, and code that leaves the frame (network, DOM outside ctx.ui,
+//     Deezer without experience/API.md)
 //   - core/ fingerprint
 // Usage: npm run check [-- examples/02-video] [-- --strict]
 
@@ -72,6 +73,29 @@ const videoSize = (file: string): {width: number; height: number} | null => {
     // ffprobe not installed: fall back on the MP4 parser.
   }
   return /\.(mp4|m4v|mov)$/i.test(file) ? mp4Size(file) : null
+}
+
+// Behaviors are plain modules: nothing stops them technically. These warnings show the teacher
+// (and the AI agent) when one leaves the frame of RULES.md § 4 / 4 bis.
+const BEHAVIOR_RULES: [RegExp, string][] = [
+  [/\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b|\bsendBeacon\b/, 'appel réseau direct : interdit (pour Deezer, ctx.deezer)'],
+  [/api\.deezer\.com|\bDZ\.\w+/, 'appel Deezer à la main : utilise ctx.deezer(...)'],
+  [/\bdocument\s*\.(body|head|documentElement|createElement|querySelector|getElementById|getElementsBy)/, 'accès direct à la page : passe par ctx.ui.panel(...) (createElement / querySelector sur le panneau, pas sur document)'],
+  [/\.appendChild\s*\(\s*document\.createElement\s*\(\s*['"]style/, 'balise <style> ajoutée à la main : utilise ctx.ui.style(...)'],
+  [/\bnew\s+(\w+\.)*(Scene|WebGLRenderer)\s*\(/, 'nouvelle scène ou nouveau renderer : ajoute tes objets à ctx.poster ou à une brique'],
+]
+
+const stripComments = (code: string): string =>
+  code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[\s;{}()])\/\/.*$/gm, '$1')
+
+const checkBehaviorScope = (name: string, source: string): void => {
+  const code = stripComments(source)
+  for (const [re, message] of BEHAVIOR_RULES) {
+    if (re.test(code)) warn(`behavior « ${name} » : ${message}`)
+  }
+  if (/\bctx\.deezer\b/.test(code) && !existsSync(join(configDir, 'API.md'))) {
+    warn(`behavior « ${name} » utilise ctx.deezer sans ${relative(root, join(configDir, 'API.md'))} : demande l'autorisation à ton enseignant`)
+  }
 }
 
 const assetsOf = (b: Brick): string[] => {
@@ -164,7 +188,9 @@ const main = async () => {
       const stderr = String((err as {stderr?: Buffer}).stderr ?? '')
       const line = stderr.split('\n').find((l) => /SyntaxError/.test(l)) ?? 'erreur de syntaxe'
       error(`behavior « ${name} » : ${line.trim()}`)
+      continue
     }
+    checkBehaviorScope(name, readFileSync(file, 'utf8'))
   }
 
   // 4. Targets (one, or one per poster with "targets")
