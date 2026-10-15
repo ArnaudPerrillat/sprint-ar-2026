@@ -27,12 +27,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          # package.json plutôt que package-lock.json : le lock peut manquer (voir ci-dessous).
-          cache-dependency-path: package.json
+          # Pas de « cache: npm » : il exige un package-lock.json, que l'export
+          # Google AI Studio ne pousse pas toujours.
 
       # Google AI Studio réécrit package-lock.json à chaque push (sans « resolved »
-      # ni « integrity », parfois désynchronisé de package.json) : npm ci échoue alors.
+      # ni « integrity », parfois désynchronisé de package.json), ou ne le pousse
+      # pas du tout : npm ci échoue alors.
       # Dans ce cas, on ignore le lock et on réinstalle depuis package.json.
       - name: Installer les dépendances
         run: |
