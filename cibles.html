@@ -4,41 +4,77 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Générer la cible de mon affiche</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" />
   </head>
   <body>
     <main class="tc">
       <header class="tc-head">
         <h1>Générer la cible de mon affiche</h1>
-        <p>Dépose le fichier final de ton affiche (tel qu'il sera imprimé) : tu récupères un dossier à mettre dans <code>experience/target/</code>. Tout se fait dans ton navigateur, rien n'est envoyé sur internet.</p>
+        <p>Dépose le fichier final de ton affiche (tel qu'il sera imprimé) : tu vois comment le téléphone la reconnaîtra, puis tu récupères un dossier à mettre dans <code>experience/target/</code>. Tout se fait dans ton navigateur, rien n'est envoyé sur internet.</p>
       </header>
 
-      <fieldset class="tc-mode">
-        <legend>Mon projet</legend>
-        <label><input type="radio" name="mode" value="single" checked /> Une seule affiche</label>
-        <label><input type="radio" name="mode" value="group" /> Plusieurs affiches (projet de groupe : puzzle, série…)</label>
-        <label class="tc-group-name" hidden>Nom du groupe <input type="text" id="group-name" value="groupe" maxlength="40" /></label>
-      </fieldset>
+      <ol class="tc-how" aria-label="Comment le téléphone reconnaît ton affiche">
+        <li><small>01</small><b>Il oublie les couleurs</b>Le moteur ne garde qu'une petite image en niveaux de gris.</li>
+        <li><small>02</small><b>Il cherche des points d'accroche</b>Des coins nets et contrastés : lettres, contours, textures.</li>
+        <li><small>03</small><b>Il les retrouve dans la caméra</b>Plus il y en a, partout sur l'affiche, plus la détection est rapide.</li>
+      </ol>
 
-      <label class="tc-drop" id="drop">
-        <input type="file" id="files" accept="image/png,image/jpeg,image/webp" multiple hidden />
-        <strong>Glisse ton affiche ici</strong>
-        <span>ou clique pour choisir un fichier (PNG ou JPG, 1500 px de large ou plus)</span>
-      </label>
+      <section class="tc-step">
+        <h2 class="tc-step-title"><span>Étape 1</span>Mon projet</h2>
+        <fieldset class="tc-mode">
+          <legend class="tc-sr">Mon projet</legend>
+          <label class="tc-choice"><input type="radio" name="mode" value="single" checked /> <span>Une seule affiche <small>Projet individuel</small></span></label>
+          <label class="tc-choice"><input type="radio" name="mode" value="group" /> <span>Plusieurs affiches <small>Projet de groupe : puzzle, série…</small></span></label>
+          <label class="tc-group-name" hidden>Nom du groupe <input class="tc-input" type="text" id="group-name" value="groupe" maxlength="40" /></label>
+        </fieldset>
+      </section>
+
+      <section class="tc-step">
+        <h2 class="tc-step-title"><span>Étape 2</span>Mon affiche</h2>
+        <label class="tc-drop" id="drop">
+          <input type="file" id="files" accept="image/png,image/jpeg,image/webp" multiple class="tc-sr" />
+          <span class="tc-drop-icon"><svg class="tc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg></span>
+          <strong>Glisse ton affiche ici</strong>
+          <span class="tc-drop-hint">ou clique pour choisir un fichier (PNG ou JPG, 1500 px de large ou plus)</span>
+        </label>
+      </section>
 
       <section id="results" class="tc-results" aria-live="polite"></section>
       <section id="group" class="tc-group" hidden></section>
 
-      <details class="tc-help">
-        <summary>Que faire du dossier téléchargé ?</summary>
-        <ol>
-          <li>Dézippe le fichier téléchargé.</li>
-          <li>Sur GitHub, dans ton dépôt, ouvre le dossier <code>experience/target/</code>, puis <strong>Add file › Upload files</strong> : glisse <strong>tous</strong> les fichiers du dossier dézippé, puis <strong>Commit changes</strong>. Les fichiers de même nom sont remplacés ; tu peux laisser les anciens fichiers de démo.</li>
-          <li>Dans AI Studio, récupère les changements depuis GitHub (synchronisation), puis vérifie l'aperçu : c'est ton affiche qui doit apparaître.</li>
-          <li>Projet à plusieurs affiches : colle aussi le bloc <code>"targets"</code> dans <code>experience.json</code> (ou demande à l'agent de le faire).</li>
-        </ol>
-        <p>Ton affiche change ? Régénère la cible : une cible faite sur une autre version de l'affiche ne sera pas reconnue, ou le contenu sera décalé.</p>
-      </details>
+      <div class="tc-helps">
+        <details class="tc-help">
+          <summary>Que faire du dossier téléchargé ?</summary>
+          <ol>
+            <li>Dézippe le fichier téléchargé.</li>
+            <li>Sur GitHub, dans ton dépôt, ouvre le dossier <code>experience/target/</code>, puis <strong>Add file › Upload files</strong> : glisse <strong>tous</strong> les fichiers du dossier dézippé, puis <strong>Commit changes</strong>. Les fichiers de même nom sont remplacés ; tu peux laisser les anciens fichiers de démo.</li>
+            <li>Dans AI Studio, récupère les changements depuis GitHub (synchronisation), puis vérifie l'aperçu : c'est ton affiche qui doit apparaître.</li>
+            <li>Projet à plusieurs affiches : colle aussi le bloc <code>"targets"</code> dans <code>experience.json</code> (ou demande à l'agent de le faire).</li>
+          </ol>
+          <p>Ton affiche change ? Régénère la cible : une cible faite sur une autre version de l'affiche ne sera pas reconnue, ou le contenu sera décalé.</p>
+        </details>
+
+        <details class="tc-help">
+          <summary>Améliorer la reconnaissance de mon affiche</summary>
+          <ul>
+            <li><strong>Du détail partout</strong> : texte, contours, trames, textures. Une grande zone d'aplat (vue « Zones vides » en rouge) n'aide pas le téléphone.</li>
+            <li><strong>Du contraste en gris</strong> : regarde la vue « Vision du téléphone ». Un rouge et un vert de même clarté deviennent le même gris : le motif disparaît.</li>
+            <li><strong>Pas de motif répété à l'identique</strong> : le téléphone ne sait plus quel morceau il voit. Varie les formes.</li>
+            <li><strong>Teste sur le tirage</strong> : l'encre, le papier et la lumière changent le contraste. Garde du temps pour un essai réel.</li>
+          </ul>
+        </details>
+      </div>
     </main>
+
+    <dialog id="enlarged" class="tc-dialog" aria-labelledby="enlarged-title">
+      <div class="tc-dialog-head">
+        <strong id="enlarged-title" class="tc-dialog-title"></strong>
+        <button type="button" class="tc-icon-btn tc-dialog-close" aria-label="Fermer"><svg class="tc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="tc-dialog-body"></div>
+    </dialog>
     <script type="module" src="./tools/cibles.ts"></script>
   </body>
 </html>

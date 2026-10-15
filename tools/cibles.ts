@@ -2,7 +2,9 @@
 
 import './cibles.css'
 import {zipSync, strToU8} from 'fflate'
-import {processPoster, similarity, slug, type ProcessedTarget} from './target-processing'
+import {GOOD_CORNERS, WEAK_CORNERS, processPoster, similarity, slug, type ProcessedTarget} from './target-processing'
+import {createInspector, type View} from './inspector'
+import {icon} from './icons'
 
 interface Entry {
   id: number
@@ -11,6 +13,7 @@ interface Entry {
   result: ProcessedTarget | null
   error: string | null
   busy: boolean
+  view: View
 }
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T
@@ -66,7 +69,7 @@ const addFiles = (files: FileList | File[]) => {
   if (!list.length) return
   if (mode() === 'single') entries = []
   for (const file of list.slice(0, mode() === 'single' ? 1 : 16)) {
-    const entry: Entry = {id: nextId++, file, name: '', result: null, error: null, busy: false}
+    const entry: Entry = {id: nextId++, file, name: '', result: null, error: null, busy: false, view: 'points'}
     entries.push(entry)
     entry.name = uniqueName(file.name.replace(/\.[^.]+$/, ''), entry)
     void process(entry)
@@ -107,28 +110,48 @@ const groupZip = () => {
   download(`cibles-${group}.zip`, zipSync(files, {level: 0}))
 }
 
+// The gauge goes up to 1.5 × the "good" threshold.
+const GAUGE_MAX = GOOD_CORNERS * 1.5
+const gaugePct = (n: number) => Math.min(100, (n / GAUGE_MAX) * 100)
+
 const scoreBadge = (r: ProcessedTarget) => {
-  const icon = {bon: '●', moyen: '◐', faible: '○'}[r.score.level]
+  const badge = {bon: 'Bonne', moyen: 'Moyenne', faible: 'Faible'}[r.score.level]
   const advice = r.score.advice.map((a) => `<li>${a}</li>`).join('')
   const verdict = {
     bon: 'Elle sera reconnue rapidement.',
     moyen: 'Elle risque d\'être reconnue lentement : teste vite sur le tirage, ou ajoute des détails.',
     faible: 'Elle sera reconnue très lentement, voire pas du tout : retravaille-la avant le tirage.',
   }[r.score.level]
-  return `<div class="tc-score is-${r.score.level}"><strong>${icon} Reconnaissance : ${r.score.level}</strong>
-    <span>${r.score.corners.toLocaleString('fr-FR')} points d'accroche (conseillé : 18 000 et plus). ${verdict}</span>
-    ${advice ? `<ul>${advice}</ul>` : ''}</div>`
+  return `<div class="tc-score is-${r.score.level}">
+    <div class="tc-score-head"><span class="tc-label">Reconnaissance</span><span class="tc-badge is-${r.score.level}">${badge}</span></div>
+    <div class="tc-score-value"><b>${r.score.corners.toLocaleString('fr-FR')}</b><span>points d'accroche</span></div>
+    <div class="tc-gauge" role="meter" aria-valuemin="0" aria-valuemax="${GAUGE_MAX}" aria-valuenow="${r.score.corners}" aria-label="Points d'accroche">
+      <span class="tc-gauge-fill" style="width:${gaugePct(r.score.corners)}%"></span>
+      <i style="left:${gaugePct(WEAK_CORNERS)}%"></i><i style="left:${gaugePct(GOOD_CORNERS)}%"></i>
+    </div>
+    <div class="tc-gauge-scale"><span style="left:${gaugePct(WEAK_CORNERS)}%">12 000</span><span style="left:${gaugePct(GOOD_CORNERS)}%">18 000</span></div>
+    <p>${verdict} Conseillé : 18&nbsp;000 et plus.</p>
+  </div>
+  ${advice ? `<div class="tc-alert is-warning">${icon('alert')}<strong>À améliorer</strong><ul>${advice}</ul><p class="tc-note">Les vues « Points d'accroche » et « Zones vides » montrent où en ajouter.</p></div>` : ''}`
 }
 
-// Tracked 3:4 zone in upright poster coordinates (inverse of the CLI rotation).
-const zoneStyle = (r: ProcessedTarget) => {
-  const c = r.crop
-  const [W, H] = c.isRotated ? [c.originalHeight, c.originalWidth] : [c.originalWidth, c.originalHeight]
-  const z = c.isRotated
-    ? {left: c.top, top: H - c.left - c.width, width: c.height, height: c.width}
-    : {left: c.left, top: c.top, width: c.width, height: c.height}
-  return `left:${(z.left / W) * 100}%;top:${(z.top / H) * 100}%;width:${(z.width / W) * 100}%;height:${(z.height / H) * 100}%`
+const dialog = $<HTMLDialogElement>('#enlarged')
+const enlarge = (e: Entry) => {
+  if (!e.result) return
+  dialog.querySelector('.tc-dialog-title')!.textContent = e.name
+  dialog.querySelector('.tc-dialog-body')!.replaceChildren(createInspector(e.result, e.view, {
+    onView: (v) => {
+      e.view = v
+    },
+  }))
+  dialog.showModal()
 }
+dialog.querySelector('.tc-dialog-close')!.addEventListener('click', () => dialog.close())
+dialog.addEventListener('click', (ev) => {
+  if (ev.target === dialog) dialog.close()
+})
+// Keep the card on the view chosen in the enlarged inspector.
+dialog.addEventListener('close', () => render())
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (ch) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch]!))
 
@@ -139,18 +162,26 @@ const render = () => {
     card.className = 'tc-card'
     const r = e.result
     card.innerHTML = `
-      <div class="tc-preview">${r ? `<img src="${r.previewUrl}" alt="Aperçu de ${escape(e.name)}"/><span class="tc-zone" style="${zoneStyle(r)}"></span>` : `<div class="tc-placeholder">${e.busy ? 'Traitement…' : ''}</div>`}</div>
+      <div class="tc-preview">${r ? '' : `<div class="tc-placeholder${e.busy ? ' is-busy' : ''}">${e.busy ? 'Analyse de l\'affiche…' : ''}</div>`}</div>
       <div class="tc-info">
-        <label class="tc-name">${isGroup ? 'Identifiant de l\'affiche' : 'Nom'} <input type="text" value="${escape(e.name)}" maxlength="40"/></label>
+        <label class="tc-field">${isGroup ? 'Identifiant de l\'affiche' : 'Nom de la cible'} <input class="tc-input" type="text" value="${escape(e.name)}" maxlength="40"/></label>
         <p class="tc-file">${escape(e.file.name)}</p>
-        ${e.error ? `<p class="tc-error">✖ ${escape(e.error)}</p>` : ''}
-        ${r ? scoreBadge(r) : ''}
-        ${r ? `<p class="tc-note">Zone suivie (cadre) : ${Math.round(r.trackedShare * 100)} % de l'affiche. Le reste peut quand même porter du contenu.</p>` : ''}
+        ${e.error ? `<div class="tc-alert is-error">${icon('circleAlert')}<strong>Impossible de traiter ce fichier</strong><p>${escape(e.error)}</p></div>` : ''}
+        ${r ? `<div class="tc-separator"></div>${scoreBadge(r)}` : ''}
+        ${r ? `<p class="tc-note">Zone suivie (cadre rose) : ${Math.round(r.trackedShare * 100)} % de l'affiche. Le reste peut quand même porter du contenu.</p>` : ''}
         <div class="tc-actions">
-          ${r && !isGroup ? `<button type="button" class="tc-primary" data-act="zip">Télécharger cible-${escape(e.name)}.zip</button>` : ''}
+          ${r && !isGroup ? `<button type="button" class="tc-primary" data-act="zip">${icon('download')}<span>Télécharger cible-${escape(e.name)}.zip</span></button>` : ''}
           <button type="button" class="tc-ghost" data-act="remove">Retirer</button>
         </div>
       </div>`
+    if (r) {
+      card.querySelector('.tc-preview')!.append(createInspector(r, e.view, {
+        onView: (v) => {
+          e.view = v
+        },
+        onEnlarge: () => enlarge(e),
+      }))
+    }
     const nameInput = card.querySelector('input')!
     nameInput.addEventListener('change', () => {
       e.name = uniqueName(nameInput.value, e)
@@ -163,6 +194,10 @@ const render = () => {
     card.querySelector('[data-act="zip"]')?.addEventListener('click', () => r && singleZip(r))
     return card
   }))
+  drop.classList.toggle('is-compact', entries.length > 0)
+  $<HTMLElement>('.tc-drop strong').textContent = entries.length
+    ? (isGroup ? 'Ajouter d\'autres affiches' : 'Changer d\'affiche')
+    : (isGroup ? 'Glisse toutes les affiches du groupe ici' : 'Glisse ton affiche ici')
   renderGroup()
 }
 
@@ -181,19 +216,20 @@ const renderGroup = () => {
   const block = targetsBlock(done.map((e) => e.name))
   groupBox.innerHTML = `
     <h2>${done.length} affiche${done.length > 1 ? 's' : ''} prête${done.length > 1 ? 's' : ''}</h2>
-    ${warnings.map((w) => `<p class="tc-warning">⚠ ${escape(w)}</p>`).join('')}
+    ${warnings.map((w) => `<div class="tc-alert is-warning">${icon('alert')}<strong>Affiches trop proches</strong><p>${escape(w)}</p></div>`).join('')}
     <p>À coller dans <code>experience.json</code> :</p>
     <pre class="tc-block">${escape(block)}</pre>
     <div class="tc-actions">
-      <button type="button" class="tc-ghost" data-act="copy">Copier le bloc</button>
-      <button type="button" class="tc-primary" data-act="zip" ${busy ? 'disabled' : ''}>Télécharger cibles-${escape(slug(groupNameInput.value))}.zip</button>
+      <button type="button" class="tc-primary" data-act="zip" ${busy ? 'disabled' : ''}>${icon('download')}<span>Télécharger cibles-${escape(slug(groupNameInput.value))}.zip</span></button>
+      <button type="button" class="tc-ghost" data-act="copy">${icon('copy')}<span>Copier le bloc</span></button>
     </div>`
-  groupBox.querySelector('[data-act="copy"]')!.addEventListener('click', async (ev) => {
+  const copyBtn = groupBox.querySelector<HTMLButtonElement>('[data-act="copy"]')!
+  copyBtn.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(block)
-      ;(ev.target as HTMLButtonElement).textContent = 'Copié ✔'
+      copyBtn.innerHTML = `${icon('check')}<span>Copié</span>`
     } catch {
-      ;(ev.target as HTMLButtonElement).textContent = 'Sélectionne le bloc et copie-le'
+      copyBtn.innerHTML = '<span>Sélectionne le bloc et copie-le</span>'
     }
   })
   groupBox.querySelector('[data-act="zip"]')!.addEventListener('click', groupZip)
@@ -218,7 +254,6 @@ for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="mod
     const group = mode() === 'group'
     $<HTMLElement>('.tc-group-name').hidden = !group
     input.multiple = group
-    $<HTMLElement>('.tc-drop strong').textContent = group ? 'Glisse toutes les affiches du groupe ici' : 'Glisse ton affiche ici'
     if (!group && entries.length > 1) entries = entries.slice(0, 1)
     render()
   })

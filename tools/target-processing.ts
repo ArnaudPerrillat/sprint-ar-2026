@@ -30,7 +30,16 @@ export interface Trackability {
   emptyCells: number
   level: 'bon' | 'moyen' | 'faible'
   advice: string[]
+  // For the inspector: 1 for each luminance pixel counted in `corners`, and the count per cell of
+  // the 8×8 grid (row by row).
+  mask: Uint8Array
+  perCell: number[]
 }
+
+export const GRID_CELLS = 8
+export const EMPTY_CELL = 15
+export const GOOD_CORNERS = 18000
+export const WEAK_CORNERS = 12000
 
 export interface ProcessedTarget {
   name: string
@@ -108,8 +117,9 @@ export const scoreTrackability = (img: ImageData): Trackability => {
   const {width: w, height: h, data} = img
   const gray = new Float32Array(w * h)
   for (let i = 0; i < w * h; i++) gray[i] = data[i * 4]
-  const cells = 8
+  const cells = GRID_CELLS
   const perCell = new Array(cells * cells).fill(0)
+  const mask = new Uint8Array(w * h)
   let corners = 0
   let sum = 0
   let sum2 = 0
@@ -122,6 +132,7 @@ export const scoreTrackability = (img: ImageData): Trackability => {
       const gy = gray[i + w] - gray[i - w]
       if (Math.abs(gx) > 40 && Math.abs(gy) > 40) {
         corners++
+        mask[i] = 1
         perCell[Math.min(cells - 1, Math.floor((y / h) * cells)) * cells + Math.min(cells - 1, Math.floor((x / w) * cells))]++
       }
     }
@@ -129,13 +140,13 @@ export const scoreTrackability = (img: ImageData): Trackability => {
   const n = (w - 2) * (h - 2)
   const mean = sum / n
   const contrast = Math.sqrt(Math.max(0, sum2 / n - mean * mean))
-  const emptyCells = perCell.filter((c) => c < 15).length
+  const emptyCells = perCell.filter((c) => c < EMPTY_CELL).length
   const advice: string[] = []
-  if (corners < 18000) advice.push('pas assez de détails nets : ajoute du texte, des contours, des formes variées')
+  if (corners < GOOD_CORNERS) advice.push('pas assez de détails nets : ajoute du texte, des contours, des formes variées')
   if (emptyCells > 12) advice.push(`${emptyCells}/64 zones presque vides : répartis les détails sur toute l'affiche`)
   if (contrast < 50) advice.push('contraste faible en noir et blanc (le moteur ne voit pas les couleurs) : renforce les foncés')
-  const level = corners >= 18000 && emptyCells <= 12 ? 'bon' : corners >= 12000 ? 'moyen' : 'faible'
-  return {corners, contrast, emptyCells, level, advice}
+  const level = corners >= GOOD_CORNERS && emptyCells <= 12 ? 'bon' : corners >= WEAK_CORNERS ? 'moyen' : 'faible'
+  return {corners, contrast, emptyCells, level, advice, mask, perCell}
 }
 
 // 0 = unrelated, 1 = identical (normalised correlation of 48×64 thumbnails).
@@ -227,7 +238,8 @@ export const processPoster = async (file: File, name: string): Promise<Processed
     {name: resources.thumbnailImage, data: await toJpeg(thumbnail, 0.9)},
     {name: resources.posterImage, data: await toJpeg(poster, 0.82)},
   ]
-  const preview = resizeTo(upright.c, Math.min(H, 520))
+  // Large enough for the enlarged inspector.
+  const preview = resizeTo(upright.c, Math.min(H, 1400))
   return {
     name,
     crop,
